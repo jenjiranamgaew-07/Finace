@@ -435,6 +435,7 @@ export default function App() {
               </div>
             ))}
             {editMode && <button className="btn" style={{ background: "#22c55e", marginTop: 4 }} onClick={() => setShowAddDebt(true)}>➕ เพิ่มหนี้ใหม่</button>}
+            {!editMode && <button className="btn" style={{ background: "#22c55e", marginTop: 4 }} onClick={() => setShowAddDebt(true)}>➕ เพิ่มหนี้ใหม่</button>}
             {editMode && (
               <div style={{ marginTop: 16 }}>
                 <div className="label">ค่าใช้จ่ายประจำ</div>
@@ -480,7 +481,15 @@ export default function App() {
                   <input className="inp" type="date" value={quickDate} onChange={e => setQuickDate(e.target.value)} />
                 </div>
                 <select className="inp" value={quickCat} onChange={e => setQuickCat(e.target.value)}>
-                  {["ค่ากับข้าว/ของใช้","น้ำมันรถ","ช้อปส่วนตัว","ค่าไฟที่ไทย","หนี้ไทย","ประกัน","อื่นๆ","รายรับ"].map(o => <option key={o}>{o}</option>)}
+                  {[
+                    "--- รายรับ ---","รายรับ",
+                    "--- หนี้ EUR ---","หนี้บ้านไทย ABN","บัตรเครดิต ABN","Bondora","บัตร Amex","ประกันสุขภาพสะสม","หนี้ DUO",
+                    "--- หนี้ไทย ---","หนี้ไทย","กู้สหกรณ์","ไฟแนนซ์รถคิก","ไฟแนนซ์รถคอท","หนี้ทรู","Shopee",
+                    "--- ค่าใช้จ่าย ---","ค่ากับข้าว/ของใช้","น้ำมันรถ","ช้อปส่วนตัว","ค่าไฟที่ไทย","ประกัน","ให้แม่","อื่นๆ"
+                  ].map(o => o.startsWith("---")
+                    ? <option key={o} disabled style={{color:"#4b5563"}}>{o}</option>
+                    : <option key={o}>{o}</option>
+                  )}
                 </select>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6 }}>
                   {["Debit","Amex","Shopee","Income"].map(m => (
