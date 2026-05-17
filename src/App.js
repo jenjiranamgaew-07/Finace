@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, onSnapshot, setDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCZDHBslv9KRiTwtmm8dyzgMgz1YAZeV3E",
@@ -225,39 +225,57 @@ export default function App() {
   // Budget warning threshold
   const [showBudgetWarning, setShowBudgetWarning] = useState(false);
 
-  // Load: Firebase realtime + localStorage fallback
+  // Load: Firebase one-time load + localStorage fallback
   useEffect(() => {
-    // First load from localStorage instantly
-    const ls = lsLoad();
-    if (ls) {
-      if (ls.debts) setDebtsState(ls.debts);
-      if (ls.expenses) setExpensesState(ls.expenses);
-      if (ls.transactions) setTxnsState(ls.transactions);
-      if (ls.settings) setSettingsState(ls.settings);
-      if (ls.categories) setCategoriesState(ls.categories);
-    }
-
-    // Then subscribe to Firebase realtime
-    if (db) {
-      const unsub = onSnapshot(doc(db, "finance", "user_data"), (snap) => {
-        if (snap.exists()) {
-          const data = snap.data();
-          if (data.debts) setDebtsState(data.debts);
-          if (data.expenses) setExpensesState(data.expenses);
-          if (data.transactions) setTxnsState(data.transactions);
-          if (data.settings) setSettingsState(data.settings);
-          if (data.categories) setCategoriesState(data.categories);
-          lsSave(data); // always keep localStorage in sync
+    (async () => {
+      // โหลดจาก Firebase ครั้งเดียว ไม่ใช่ realtime listener
+      if (db) {
+        try {
+          const { getDoc, doc: firestoreDoc } = await import("firebase/firestore");
+          const snap = await getDoc(firestoreDoc(db, "finance", "user_data"));
+          if (snap.exists()) {
+            const data = snap.data();
+            if (data.debts) setDebtsState(data.debts);
+            if (data.expenses) setExpensesState(data.expenses);
+            if (data.transactions) setTxnsState(data.transactions);
+            if (data.settings) setSettingsState(data.settings);
+            if (data.categories) setCategoriesState(data.categories);
+            lsSave(data);
+          } else {
+            // Firebase ว่าง โหลดจาก localStorage แทน
+            const ls = lsLoad();
+            if (ls) {
+              if (ls.debts) setDebtsState(ls.debts);
+              if (ls.expenses) setExpensesState(ls.expenses);
+              if (ls.transactions) setTxnsState(ls.transactions);
+              if (ls.settings) setSettingsState(ls.settings);
+              if (ls.categories) setCategoriesState(ls.categories);
+            }
+          }
+        } catch(err) {
+          console.warn("Firebase load error:", err);
+          // Fallback to localStorage
+          const ls = lsLoad();
+          if (ls) {
+            if (ls.debts) setDebtsState(ls.debts);
+            if (ls.expenses) setExpensesState(ls.expenses);
+            if (ls.transactions) setTxnsState(ls.transactions);
+            if (ls.settings) setSettingsState(ls.settings);
+            if (ls.categories) setCategoriesState(ls.categories);
+          }
         }
-        setLoaded(true);
-      }, (err) => {
-        console.warn("Firebase listen error:", err);
-        setLoaded(true);
-      });
-      return () => unsub();
-    } else {
+      } else {
+        const ls = lsLoad();
+        if (ls) {
+          if (ls.debts) setDebtsState(ls.debts);
+          if (ls.expenses) setExpensesState(ls.expenses);
+          if (ls.transactions) setTxnsState(ls.transactions);
+          if (ls.settings) setSettingsState(ls.settings);
+          if (ls.categories) setCategoriesState(ls.categories);
+        }
+      }
       setLoaded(true);
-    }
+    })();
   }, []);
 
   const toast = (msg, color="#22c55e") => { setNotif({msg,color}); setTimeout(()=>setNotif(null),3500); };
