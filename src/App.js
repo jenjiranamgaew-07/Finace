@@ -424,7 +424,7 @@ export default function App() {
   };
 
   if(!loaded) return (
-    <div style={{background:"#0d0f14",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",color:"#64748b",fontFamily:"Sarabun,sans-serif",flexDirection:"column",gap:12}}>
+    <div style={{background:"#0d0f14",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",color:"#cbd5e1",fontFamily:"Sarabun,sans-serif",flexDirection:"column",gap:12}}>
       <div style={{fontSize:48}}>💰</div>
       <div>กำลังโหลดข้อมูลจาก Cloud...</div>
       <div style={{fontSize:11}}>🔥 Firebase Sync</div>
@@ -488,7 +488,7 @@ export default function App() {
       {/* TABS */}
       <div style={{display:"flex",gap:4,padding:"0 20px",marginBottom:14,overflowX:"auto"}} className="no-print">
         {[{id:"dashboard",i:"📊",l:"ภาพรวม"},{id:"debts",i:"💳",l:"หนี้สิน"},{id:"expenses",i:"🧾",l:"ค่าใช้จ่าย"},{id:"add",i:"✏️",l:"บันทึก"},{id:"history",i:"📋",l:"ประวัติ"},{id:"report",i:"📄",l:"Report"}].map(t=>(
-          <button key={t.id} onClick={()=>setActiveTab(t.id)} style={{background:activeTab===t.id?"#3b82f6":"#161921",color:activeTab===t.id?"white":"#64748b",border:`1px solid ${activeTab===t.id?"#3b82f6":"#1e2230"}`,borderRadius:10,padding:"7px 12px",fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"inherit"}}>{t.i} {t.l}</button>
+          <button key={t.id} onClick={()=>setActiveTab(t.id)} style={{background:activeTab===t.id?"#3b82f6":"#161921",color:activeTab===t.id?"white":"#cbd5e1",border:`1px solid ${activeTab===t.id?"#3b82f6":"#1e2230"}`,borderRadius:10,padding:"7px 12px",fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"inherit"}}>{t.i} {t.l}</button>
         ))}
       </div>
 
@@ -512,7 +512,7 @@ export default function App() {
                 })}
               </div>
               <div style={{marginTop:10,background:"#1a1e2a",borderRadius:8,padding:"8px 12px",display:"flex",justifyContent:"space-between",fontSize:12}}>
-                <span style={{color:"#64748b"}}>ยอดสะสมสิ้นปี 2026</span>
+                <span style={{color:"#cbd5e1"}}>ยอดสะสมสิ้นปี 2026</span>
                 <span style={{color:yearEndSavings>=0?"#fde68a":"#f87171",fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{yearEndSavings>=0?"+":""}{fmt(yearEndSavings)}</span>
               </div>
             </div>
@@ -526,7 +526,7 @@ export default function App() {
                   <div key={d.id} style={{marginBottom:10}}>
                     <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:3}}>
                       <span>{d.icon} {d.name}</span>
-                      <span style={{color:"#64748b",fontSize:11}}>{MONTHS[fin.getMonth()]} {fin.getFullYear()}</span>
+                      <span style={{color:"#cbd5e1",fontSize:11}}>{MONTHS[fin.getMonth()]} {fin.getFullYear()}</span>
                     </div>
                     <div style={S.prog}><div style={{height:"100%",borderRadius:3,width:`${pct}%`,background:pct>=75?"#22c55e":pct>=40?"#f59e0b":"#3b82f6"}}/></div>
                     <div style={{fontSize:9,color:"#4b5563",marginTop:2}}>{pct}% ชำระแล้ว • เหลือ {d.remaining} งวด</div>
@@ -547,11 +547,11 @@ export default function App() {
             <div style={S.card}>
               <div style={S.label}>⚙️ ตั้งค่า</div>
               <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
-                <span style={{fontSize:12,color:"#64748b",flex:1}}>รายรับ/เดือน (€)</span>
+                <span style={{fontSize:12,color:"#cbd5e1",flex:1}}>รายรับ/เดือน (€)</span>
                 <input className="inp" style={{...S.inpSm,width:100}} value={settings.monthlyIncome} onChange={e=>saveSettings({...settings,monthlyIncome:parseFloat(e.target.value)||0})}/>
               </div>
               <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                <span style={{fontSize:12,color:"#64748b",flex:1}}>อัตราแลกเปลี่ยน (THB/EUR)</span>
+                <span style={{fontSize:12,color:"#cbd5e1",flex:1}}>อัตราแลกเปลี่ยน (THB/EUR)</span>
                 <input className="inp" style={{...S.inpSm,width:70}} value={settings.exchangeRate} onChange={e=>saveSettings({...settings,exchangeRate:parseFloat(e.target.value)||35})}/>
               </div>
             </div>
@@ -569,7 +569,7 @@ export default function App() {
                     <span style={{fontSize:20}}>{d.icon}</span>
                     <div style={{flex:1}}>
                       <input className="inp" style={{marginBottom:4,fontSize:13,fontWeight:600,background:"transparent",border:"none",borderBottom:"1px solid #1e2230",borderRadius:0,padding:"2px 0"}} value={d.name} onChange={e=>updateDebt(d.id,"name",e.target.value)}/>
-                      <div style={{fontSize:10,color:"#64748b"}}>{d.isRolling?"จ่ายยอดเต็มสิ้นเดือน":`เหลือ ${d.remaining} งวด`}</div>
+                      <div style={{fontSize:10,color:"#cbd5e1"}}>{d.isRolling?"จ่ายยอดเต็มสิ้นเดือน":`เหลือ ${d.remaining} งวด`}</div>
                     </div>
                   </div>
                   <div style={{textAlign:"right"}}>
@@ -579,11 +579,11 @@ export default function App() {
                 </div>
                 {!d.isRolling && (
                   <div style={{display:"flex",gap:8,marginTop:8,alignItems:"center"}}>
-                    <span style={{fontSize:11,color:"#64748b"}}>เหลือ</span>
+                    <span style={{fontSize:11,color:"#cbd5e1"}}>เหลือ</span>
                     <input style={{...S.inpSm,width:55}} value={d.remaining} onChange={e=>updateDebt(d.id,"remaining",e.target.value)}/>
-                    <span style={{fontSize:11,color:"#64748b"}}>/</span>
+                    <span style={{fontSize:11,color:"#cbd5e1"}}>/</span>
                     <input style={{...S.inpSm,width:55}} value={d.totalInstallments} onChange={e=>updateDebt(d.id,"totalInstallments",e.target.value)}/>
-                    <span style={{fontSize:11,color:"#64748b"}}>งวด</span>
+                    <span style={{fontSize:11,color:"#cbd5e1"}}>งวด</span>
                     <button style={S.btnDanger} onClick={()=>removeDebt(d.id)}>🗑️</button>
                   </div>
                 )}
@@ -601,20 +601,20 @@ export default function App() {
                     <span style={{fontSize:20}}>{d.icon}</span>
                     <div style={{flex:1}}>
                       <input className="inp" style={{marginBottom:4,fontSize:13,fontWeight:600,background:"transparent",border:"none",borderBottom:"1px solid #1e2230",borderRadius:0,padding:"2px 0"}} value={d.name} onChange={e=>updateDebt(d.id,"name",e.target.value)}/>
-                      <div style={{fontSize:10,color:"#64748b"}}>เหลือ {d.remaining} งวด</div>
+                      <div style={{fontSize:10,color:"#cbd5e1"}}>เหลือ {d.remaining} งวด</div>
                     </div>
                   </div>
                   <div style={{textAlign:"right"}}>
                     <input style={{...S.inpSm,color:"#fb923c"}} value={d.amountTHB||Math.round(d.amount*settings.exchangeRate)} onChange={e=>updateDebt(d.id,"amountTHB",e.target.value)}/>
-                    <div style={{fontSize:10,color:"#64748b"}}>฿/เดือน</div>
+                    <div style={{fontSize:10,color:"#cbd5e1"}}>฿/เดือน</div>
                   </div>
                 </div>
                 <div style={{display:"flex",gap:8,marginTop:8,alignItems:"center"}}>
-                  <span style={{fontSize:11,color:"#64748b"}}>เหลือ</span>
+                  <span style={{fontSize:11,color:"#cbd5e1"}}>เหลือ</span>
                   <input style={{...S.inpSm,width:55}} value={d.remaining} onChange={e=>updateDebt(d.id,"remaining",e.target.value)}/>
-                  <span style={{fontSize:11,color:"#64748b"}}>/</span>
+                  <span style={{fontSize:11,color:"#cbd5e1"}}>/</span>
                   <input style={{...S.inpSm,width:55}} value={d.totalInstallments} onChange={e=>updateDebt(d.id,"totalInstallments",e.target.value)}/>
-                  <span style={{fontSize:11,color:"#64748b"}}>งวด</span>
+                  <span style={{fontSize:11,color:"#cbd5e1"}}>งวด</span>
                   <button style={S.btnDanger} onClick={()=>removeDebt(d.id)}>🗑️</button>
                 </div>
                 <div style={S.prog}><div style={{height:"100%",borderRadius:3,width:`${Math.round(((d.totalInstallments-d.remaining)/Math.max(d.totalInstallments,1))*100)}%`,background:"#f59e0b"}}/></div>
@@ -626,7 +626,7 @@ export default function App() {
               <div style={{fontSize:11,color:"#22c55e",fontWeight:700,marginBottom:8}}>💰 รวมต้องจ่าย/เดือน</div>
               {[["หนี้สิน",monthlyDebt,"#f87171"],["ค่าใช้จ่ายประจำ",monthlyFixed,"#fb923c"]].map(([l,v,c])=>(
                 <div key={l} style={{display:"flex",justifyContent:"space-between",marginBottom:4,fontSize:13}}>
-                  <span style={{color:"#64748b"}}>{l}</span>
+                  <span style={{color:"#cbd5e1"}}>{l}</span>
                   <span style={{fontFamily:"'Space Mono',monospace",color:c}}>{fmt(v)}</span>
                 </div>
               ))}
@@ -660,7 +660,7 @@ export default function App() {
             <button style={{...S.btn,background:"#22c55e",marginTop:4}} onClick={()=>setShowAddExpense(true)}>➕ เพิ่มค่าใช้จ่ายใหม่</button>
             <div style={{...S.card,marginTop:12,background:"#0f1a0f",borderColor:"#22c55e22"}}>
               <div style={{display:"flex",justifyContent:"space-between",fontSize:14}}>
-                <span style={{color:"#64748b"}}>รวมค่าใช้จ่ายประจำ</span>
+                <span style={{color:"#cbd5e1"}}>รวมค่าใช้จ่ายประจำ</span>
                 <span style={{fontFamily:"'Space Mono',monospace",color:"#fb923c",fontWeight:700}}>{fmt(monthlyFixed)}</span>
               </div>
             </div>
@@ -676,7 +676,7 @@ export default function App() {
                 <input className="inp" placeholder="ชื่อรายการ..." value={qName} onChange={e=>setQName(e.target.value)}/>
                 <input className="inp" type="number" placeholder="ยอดเงิน (EUR)" value={qAmt} onChange={e=>setQAmt(e.target.value)}/>
                 <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                  <span style={{fontSize:12,color:"#64748b",whiteSpace:"nowrap"}}>📅 วันที่</span>
+                  <span style={{fontSize:12,color:"#cbd5e1",whiteSpace:"nowrap"}}>📅 วันที่</span>
                   <input className="inp" type="date" value={qDate} onChange={e=>setQDate(e.target.value)}/>
                 </div>
                 {/* Category dropdown */}
@@ -688,7 +688,7 @@ export default function App() {
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6}}>
                   {["Debit","Amex","Shopee","Income"].map(m=>(
-                    <button key={m} onClick={()=>setQMethod(m)} style={{background:qMethod===m?"#3b82f6":"#1a1e2a",color:qMethod===m?"white":"#64748b",border:`1px solid ${qMethod===m?"#3b82f6":"#252a3a"}`,borderRadius:8,padding:"8px 4px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>{m}</button>
+                    <button key={m} onClick={()=>setQMethod(m)} style={{background:qMethod===m?"#3b82f6":"#1a1e2a",color:qMethod===m?"white":"#cbd5e1",border:`1px solid ${qMethod===m?"#3b82f6":"#252a3a"}`,borderRadius:8,padding:"8px 4px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>{m}</button>
                   ))}
                 </div>
                 <button style={S.btn} onClick={addQuickEntry}>💾 บันทึก</button>
@@ -711,7 +711,7 @@ export default function App() {
             <button style={{...S.btn,background:"#7c3aed"}} onClick={()=>setShowTransfer(true)}>🇹🇭 โอนเงินกลับไทย (Auto-Split)</button>
             <div style={{marginTop:12,padding:12,background:"#1a0f1a",border:"1px solid #7c3aed33",borderRadius:12}}>
               <div style={{fontSize:11,color:"#a78bfa",fontWeight:700,marginBottom:6}}>📥 นำเข้าข้อมูลจากไฟล์ Excel</div>
-              <div style={{fontSize:11,color:"#64748b",marginBottom:10}}>โหลดรายการ มี.ค.–เม.ย. 2026 จากไฟล์ต้นฉบับ (130 รายการ) — จะ**เพิ่ม**เข้าไปในข้อมูลปัจจุบัน</div>
+              <div style={{fontSize:11,color:"#cbd5e1",marginBottom:10}}>โหลดรายการ มี.ค.–เม.ย. 2026 จากไฟล์ต้นฉบับ (130 รายการ) — จะ**เพิ่ม**เข้าไปในข้อมูลปัจจุบัน</div>
               <button style={{...S.btn,background:"#7c3aed"}} onClick={async ()=>{
                 const existing = transactions.map(t=>t.id);
                 const toAdd = DEFAULT_TRANSACTIONS.filter(t=>!existing.includes(t.id));
@@ -838,9 +838,9 @@ export default function App() {
         <div className="modal-bg" onClick={e=>e.target===e.currentTarget&&(setShowTransfer(false),setTransferSplit(null))}>
           <div className="modal">
             <div style={{fontSize:17,fontWeight:700,marginBottom:4}}>🇹🇭 โอนเงินกลับไทย</div>
-            <div style={{fontSize:11,color:"#64748b",marginBottom:12}}>ระบบแบ่งจ่ายหนี้ไทยให้อัตโนมัติ</div>
+            <div style={{fontSize:11,color:"#cbd5e1",marginBottom:12}}>ระบบแบ่งจ่ายหนี้ไทยให้อัตโนมัติ</div>
             <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:10}}>
-              <span style={{fontSize:12,color:"#64748b",whiteSpace:"nowrap"}}>📅 วันที่</span>
+              <span style={{fontSize:12,color:"#cbd5e1",whiteSpace:"nowrap"}}>📅 วันที่</span>
               <input className="inp" type="date" value={transferDate} onChange={e=>setTransferDate(e.target.value)}/>
             </div>
             <div style={{display:"flex",gap:8,marginBottom:12}}>
@@ -859,7 +859,7 @@ export default function App() {
                 <button style={{...S.btn,marginTop:12}} onClick={confirmTransfer}>✅ ยืนยัน</button>
               </div>
             )}
-            <button onClick={()=>{setShowTransfer(false);setTransferSplit(null);}} style={{width:"100%",marginTop:8,background:"none",border:"none",color:"#64748b",fontSize:13,cursor:"pointer",fontFamily:"inherit",padding:8}}>ยกเลิก</button>
+            <button onClick={()=>{setShowTransfer(false);setTransferSplit(null);}} style={{width:"100%",marginTop:8,background:"none",border:"none",color:"#cbd5e1",fontSize:13,cursor:"pointer",fontFamily:"inherit",padding:8}}>ยกเลิก</button>
           </div>
         </div>
       )}
@@ -887,7 +887,7 @@ export default function App() {
               </label>
               <button style={S.btn} onClick={addDebt}>💾 เพิ่มหนี้</button>
             </div>
-            <button onClick={()=>setShowAddDebt(false)} style={{width:"100%",marginTop:8,background:"none",border:"none",color:"#64748b",fontSize:13,cursor:"pointer",fontFamily:"inherit",padding:8}}>ยกเลิก</button>
+            <button onClick={()=>setShowAddDebt(false)} style={{width:"100%",marginTop:8,background:"none",border:"none",color:"#cbd5e1",fontSize:13,cursor:"pointer",fontFamily:"inherit",padding:8}}>ยกเลิก</button>
           </div>
         </div>
       )}
@@ -907,7 +907,7 @@ export default function App() {
                 :<input className="inp" type="number" placeholder="ยอด (EUR)" value={newExpense.amount} onChange={e=>setNewExpense({...newExpense,amount:e.target.value})}/>}
               <button style={S.btn} onClick={addExpense}>💾 เพิ่ม</button>
             </div>
-            <button onClick={()=>setShowAddExpense(false)} style={{width:"100%",marginTop:8,background:"none",border:"none",color:"#64748b",fontSize:13,cursor:"pointer",fontFamily:"inherit",padding:8}}>ยกเลิก</button>
+            <button onClick={()=>setShowAddExpense(false)} style={{width:"100%",marginTop:8,background:"none",border:"none",color:"#cbd5e1",fontSize:13,cursor:"pointer",fontFamily:"inherit",padding:8}}>ยกเลิก</button>
           </div>
         </div>
       )}
@@ -930,7 +930,7 @@ export default function App() {
                 </div>
               ))}
             </div>
-            <button onClick={()=>setShowAddCat(false)} style={{width:"100%",marginTop:12,background:"none",border:"none",color:"#64748b",fontSize:13,cursor:"pointer",fontFamily:"inherit",padding:8}}>ปิด</button>
+            <button onClick={()=>setShowAddCat(false)} style={{width:"100%",marginTop:12,background:"none",border:"none",color:"#cbd5e1",fontSize:13,cursor:"pointer",fontFamily:"inherit",padding:8}}>ปิด</button>
           </div>
         </div>
       )}
@@ -949,7 +949,7 @@ export default function App() {
               </select>
               <button style={S.btn} onClick={saveEditTx}>💾 บันทึก</button>
             </div>
-            <button onClick={()=>setEditingTx(null)} style={{width:"100%",marginTop:8,background:"none",border:"none",color:"#64748b",fontSize:13,cursor:"pointer",fontFamily:"inherit",padding:8}}>ยกเลิก</button>
+            <button onClick={()=>setEditingTx(null)} style={{width:"100%",marginTop:8,background:"none",border:"none",color:"#cbd5e1",fontSize:13,cursor:"pointer",fontFamily:"inherit",padding:8}}>ยกเลิก</button>
           </div>
         </div>
       )}
@@ -966,3 +966,176 @@ export default function App() {
     </div>
   );
 }
+
+
+// =====================================================
+// PRODUCTION FIX PATCH
+// =====================================================
+
+// Firebase autosave
+useEffect(() => {
+
+  if(!loaded) return;
+
+  const autoSave = async () => {
+
+    try {
+
+      await fbSave({
+        debts,
+        expenses,
+        transactions,
+        settings,
+        categories
+      });
+
+      console.log("🔥 Auto Saved");
+
+    } catch(e) {
+
+      console.error(e);
+
+    }
+  };
+
+  autoSave();
+
+}, [
+  debts,
+  expenses,
+  transactions,
+  settings,
+  categories,
+  loaded
+]);
+
+// THB / EUR
+const [qCurrency, setQCurrency] =
+  useState("EUR");
+
+// History filters
+const [historySearch, setHistorySearch] =
+  useState("");
+
+const [historyMonth, setHistoryMonth] =
+  useState("all");
+
+const [historyYear, setHistoryYear] =
+  useState("2026");
+
+// Forecast engine
+function forecastMoney(balance, expense) {
+
+  const avgDaily = expense / 30;
+
+  const daysLeft =
+    Math.floor(
+      balance / Math.max(avgDaily, 1)
+    );
+
+  return {
+    avgDaily,
+    daysLeft
+  };
+}
+
+// Financial score
+function calculateFinancialScore({
+  balance = 0,
+  monthlyDebt = 0,
+  monthlyIncome = 1
+}) {
+
+  let score = 100;
+
+  const ratio =
+    monthlyDebt / monthlyIncome;
+
+  if(ratio > 0.7)
+    score -= 30;
+
+  else if(ratio > 0.5)
+    score -= 15;
+
+  if(balance < 300)
+    score -= 15;
+
+  return Math.max(0, score);
+}
+
+// Auto installment deduct
+function autoDeductDebt(
+  debts=[],
+  category=""
+) {
+
+  return debts.map(d => {
+
+    if(
+      d.name === category &&
+      d.remaining > 0
+    ) {
+
+      return {
+        ...d,
+        remaining:
+          d.remaining - 1
+      };
+    }
+
+    return d;
+
+  });
+}
+
+// Auto category
+function autoCategory(name="") {
+
+  const n = name.toLowerCase();
+
+  if(n.includes("aldi"))
+    return "ค่ากับข้าว/ของใช้";
+
+  if(n.includes("tinq"))
+    return "น้ำมันรถ";
+
+  if(n.includes("shopee"))
+    return "ช้อปส่วนตัว";
+
+  return "อื่นๆ";
+}
+
+// Budget warning
+function budgetWarnings(
+  transactions=[]
+) {
+
+  const warnings = [];
+
+  const shopping =
+    transactions
+      .filter(t =>
+        (t.category || "")
+          .includes("ช้อป")
+      )
+      .reduce(
+        (s,t)=>
+          s + Math.abs(t.amount || 0),
+        0
+      );
+
+  if(shopping > 300) {
+
+    warnings.push(
+      "⚠️ Shopping สูงเกินงบ"
+    );
+
+  }
+
+  return warnings;
+}
+
+// =====================================================
+// END PATCH
+// =====================================================
+
