@@ -56,14 +56,139 @@ const DEFAULT_EXPENSES = [
 ];
 
 const DEFAULT_TRANSACTIONS = [
-  { id:"t1", date:"2026-04-27", name:"Greenfood เงินเดือน", category:"รายรับ", amount:3032.96, method:"Income" },
-  { id:"t2", date:"2026-04-27", name:"Thai home (ABN)", category:"หนี้บ้านไทย ABN", amount:-260, method:"Debit" },
-  { id:"t3", date:"2026-04-27", name:"ให้แม่", category:"ให้แม่", amount:-137.14, method:"Debit" },
-  { id:"t4", date:"2026-04-27", name:"ไฟแนนซ์รถคิก", category:"หนี้ไทย", amount:-101.57, method:"Debit" },
-  { id:"t5", date:"2026-04-27", name:"กู้สหกรณ์", category:"หนี้ไทย", amount:-106.34, method:"Debit" },
-  { id:"t6", date:"2026-04-17", name:"VGZ ประกันสุขภาพ", category:"ประกัน", amount:-149.9, method:"Debit" },
-  { id:"t7", date:"2026-04-12", name:"DUO", category:"หนี้ DUO", amount:-46.23, method:"Debit" },
-  { id:"t8", date:"2026-04-06", name:"Amex ยอดเต็ม", category:"บัตร Amex", amount:-1685.7, method:"Debit" },
+  // === มีนาคม 2026 ===
+  { id:"m01", date:"2026-03-27", name:"Greenfood เงินเดือน", category:"รายรับ", amount:3032.96, method:"Income" },
+  { id:"m02", date:"2026-03-01", name:"หนี้บ้านไทย", category:"หนี้บ้านไทย ABN", amount:-260, method:"Debit" },
+  { id:"m03", date:"2026-03-01", name:"กินข้าวนอกบ้าน Hotpot", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-88.9, method:"Debit" },
+  { id:"m04", date:"2026-03-01", name:"ส่งเงินกลับไทย", category:"ช้อปส่วนตัว/จิปาถะ", amount:-29.21, method:"Debit" },
+  { id:"m05", date:"2026-03-01", name:"รวมยอด Amex", category:"ช้อปส่วนตัว/จิปาถะ", amount:-428.25, method:"Credit" },
+  { id:"m06", date:"2026-03-01", name:"Temu", category:"ช้อปส่วนตัว/จิปาถะ", amount:-20.56, method:"Credit" },
+  { id:"m07", date:"2026-03-01", name:"Temu", category:"ช้อปส่วนตัว/จิปาถะ", amount:-10.21, method:"Credit" },
+  { id:"m08", date:"2026-03-01", name:"Temu", category:"ช้อปส่วนตัว/จิปาถะ", amount:-9.5, method:"Credit" },
+  { id:"m09", date:"2026-03-01", name:"ค่าไฟบ้านยาย", category:"ค่าไฟที่ไทย", amount:-15.18, method:"Credit" },
+  { id:"m10", date:"2026-03-01", name:"ค่าไฟบ้านยาย", category:"ค่าไฟที่ไทย", amount:-27.41, method:"Credit" },
+  { id:"m11", date:"2026-03-01", name:"ซื้อเมล็ดพันธุ์ผัก", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-23.24, method:"Credit" },
+  { id:"m12", date:"2026-03-01", name:"Fasionette", category:"ช้อปส่วนตัว/จิปาถะ", amount:-9.22, method:"Credit" },
+  { id:"m13", date:"2026-03-02", name:"สมาชิกช่องกล้า", category:"ช้อปส่วนตัว/จิปาถะ", amount:-1.37, method:"Debit" },
+  { id:"m14", date:"2026-03-02", name:"สมาชิกช่องเอก", category:"ช้อปส่วนตัว/จิปาถะ", amount:-1.37, method:"Debit" },
+  { id:"m15", date:"2026-03-02", name:"Tinq น้ำมัน", category:"น้ำมันรถ", amount:-81.53, method:"Credit" },
+  { id:"m16", date:"2026-03-02", name:"Joybuy", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-72.68, method:"Credit" },
+  { id:"m17", date:"2026-03-03", name:"Car insurance", category:"ประกันรถ", amount:-36.26, method:"Debit" },
+  { id:"m18", date:"2026-03-03", name:"Jumbo", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-15.8, method:"Credit" },
+  { id:"m19", date:"2026-03-04", name:"Youtube premium", category:"ช้อปส่วนตัว/จิปาถะ", amount:-13.99, method:"Credit" },
+  { id:"m20", date:"2026-03-05", name:"Bakery", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-11.6, method:"Debit" },
+  { id:"m21", date:"2026-03-05", name:"Amex ยอดเต็ม", category:"บัตร Amex", amount:-1685.7, method:"Debit" },
+  { id:"m22", date:"2026-03-05", name:"Grabfood for dad", category:"ช้อปส่วนตัว/จิปาถะ", amount:-8.48, method:"Credit" },
+  { id:"m23", date:"2026-03-05", name:"Fasionette", category:"ช้อปส่วนตัว/จิปาถะ", amount:-8.62, method:"Credit" },
+  { id:"m24", date:"2026-03-05", name:"Fasionette", category:"ช้อปส่วนตัว/จิปาถะ", amount:-7.55, method:"Credit" },
+  { id:"m25", date:"2026-03-05", name:"Glasses", category:"ช้อปส่วนตัว/จิปาถะ", amount:-246.5, method:"Credit" },
+  { id:"m26", date:"2026-03-06", name:"Bondora", category:"Bondora", amount:-22.74, method:"Debit" },
+  { id:"m27", date:"2026-03-07", name:"Jumbo", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-20.13, method:"Credit" },
+  { id:"m28", date:"2026-03-08", name:"Phone gadget", category:"ช้อปส่วนตัว/จิปาถะ", amount:-19.15, method:"Credit" },
+  { id:"m29", date:"2026-03-08", name:"Food delivery", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-37.45, method:"Credit" },
+  { id:"m30", date:"2026-03-08", name:"Joybuy", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-97.64, method:"Credit" },
+  { id:"m31", date:"2026-03-09", name:"Aldi", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-85.25, method:"Credit" },
+  { id:"m32", date:"2026-03-10", name:"Grab medicine for mom", category:"ช้อปส่วนตัว/จิปาถะ", amount:-2.35, method:"Credit" },
+  { id:"m33", date:"2026-03-13", name:"Mom phone bill", category:"ช้อปส่วนตัว/จิปาถะ", amount:-8.36, method:"Credit" },
+  { id:"m34", date:"2026-03-14", name:"Albert Heijn", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-3.54, method:"Debit" },
+  { id:"m35", date:"2026-03-14", name:"Glasses", category:"ช้อปส่วนตัว/จิปาถะ", amount:-128.5, method:"Credit" },
+  { id:"m36", date:"2026-03-14", name:"Aldi", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-65.69, method:"Credit" },
+  { id:"m37", date:"2026-03-14", name:"Kruidvat", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-28.59, method:"Credit" },
+  { id:"m38", date:"2026-03-15", name:"Car wash", category:"น้ำมันรถ", amount:-15.5, method:"Credit" },
+  { id:"m39", date:"2026-03-15", name:"KFC", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-14.63, method:"Credit" },
+  { id:"m40", date:"2026-03-17", name:"Tinq น้ำมัน", category:"น้ำมันรถ", amount:-87.3, method:"Credit" },
+  { id:"m41", date:"2026-03-18", name:"Food delivery", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-44.99, method:"Credit" },
+  { id:"m42", date:"2026-03-19", name:"Aldi", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-117.33, method:"Credit" },
+  { id:"m43", date:"2026-03-20", name:"Jumbo", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-18.85, method:"Credit" },
+  { id:"m44", date:"2026-03-22", name:"Kruidvat", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-45.06, method:"Credit" },
+  { id:"m45", date:"2026-03-23", name:"Dropbox", category:"อื่นๆ", amount:-11.99, method:"Credit" },
+  { id:"m46", date:"2026-03-25", name:"Simple โทรศัพท์", category:"ค่าโทรศัพท์", amount:-5.15, method:"Debit" },
+  { id:"m47", date:"2026-03-25", name:"Sushi", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-40.35, method:"Credit" },
+  { id:"m48", date:"2026-03-26", name:"Aldi", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-45.84, method:"Credit" },
+  { id:"m49", date:"2026-03-27", name:"Vodafon", category:"ค่าโทรศัพท์", amount:-36.86, method:"Debit" },
+  { id:"m50", date:"2026-03-27", name:"Postcode Loterij หวย", category:"หวย", amount:-21.0, method:"Debit" },
+  { id:"m51", date:"2026-03-27", name:"VGZ ประกันสุขภาพสะสม", category:"หนี้ประกันสุขภาพสะสม", amount:-65.73, method:"Debit" },
+  { id:"m52", date:"2026-03-27", name:"Zalando", category:"ช้อปส่วนตัว/จิปาถะ", amount:-84.95, method:"Credit" },
+  { id:"m53", date:"2026-03-27", name:"Zalando", category:"ช้อปส่วนตัว/จิปาถะ", amount:-42.9, method:"Credit" },
+  { id:"m54", date:"2026-03-28", name:"Bol", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-20.16, method:"Debit" },
+  { id:"m55", date:"2026-03-28", name:"Hot pot", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-16.5, method:"Debit" },
+  { id:"m56", date:"2026-03-28", name:"Hotpot", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-51.8, method:"Credit" },
+  { id:"m57", date:"2026-03-28", name:"Fashionette", category:"ช้อปส่วนตัว/จิปาถะ", amount:-35.82, method:"Credit" },
+  { id:"m58", date:"2026-03-28", name:"Fashionette", category:"ช้อปส่วนตัว/จิปาถะ", amount:-11.17, method:"Credit" },
+  { id:"m59", date:"2026-03-29", name:"H&M jogging pants", category:"ช้อปส่วนตัว/จิปาถะ", amount:-39.98, method:"Credit" },
+  { id:"m60", date:"2026-03-29", name:"Aldi", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-81.55, method:"Credit" },
+  { id:"m61", date:"2026-03-30", name:"ABN tax", category:"อื่นๆ", amount:-1.25, method:"Debit" },
+  { id:"m62", date:"2026-03-30", name:"ABN tax", category:"อื่นๆ", amount:-6.85, method:"Debit" },
+  { id:"m63", date:"2026-03-30", name:"ABN tax", category:"อื่นๆ", amount:-10.0, method:"Debit" },
+  { id:"m64", date:"2026-03-31", name:"DUO", category:"Duo", amount:-46.23, method:"Debit" },
+  { id:"m65", date:"2026-03-31", name:"InShared ประกันรถ", category:"ประกันรถ", amount:-36.26, method:"Debit" },
+  { id:"m66", date:"2026-03-31", name:"Parking Geleen", category:"อื่นๆ", amount:-1.0, method:"Debit" },
+  { id:"m67", date:"2026-03-31", name:"Tropical Markt", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-42.08, method:"Debit" },
+  // === เมษายน 2026 ===
+  { id:"a01", date:"2026-04-27", name:"Greenfood เงินเดือน", category:"รายรับ", amount:3032.96, method:"Income" },
+  { id:"a02", date:"2026-04-01", name:"Thai home ABN", category:"หนี้บ้านไทย ABN", amount:-260, method:"Debit" },
+  { id:"a03", date:"2026-04-01", name:"Dad car insurance", category:"อื่นๆ", amount:-21.74, method:"Credit" },
+  { id:"a04", date:"2026-04-01", name:"Fashionette", category:"ช้อปส่วนตัว/จิปาถะ", amount:-9.22, method:"Credit" },
+  { id:"a05", date:"2026-04-01", name:"Dad car tax", category:"อื่นๆ", amount:-26.24, method:"Credit" },
+  { id:"a06", date:"2026-04-02", name:"Plus", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-10.48, method:"Debit" },
+  { id:"a07", date:"2026-04-02", name:"AH Albert Heijn", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-49.12, method:"Debit" },
+  { id:"a08", date:"2026-04-02", name:"Youtube", category:"ช้อปส่วนตัว/จิปาถะ", amount:-1.35, method:"Debit" },
+  { id:"a09", date:"2026-04-02", name:"Shopee ค่าไฟ", category:"ค่าไฟที่ไทย", amount:-16.27, method:"Credit" },
+  { id:"a10", date:"2026-04-02", name:"Shopee ค่าไฟ", category:"ค่าไฟที่ไทย", amount:-30.7, method:"Credit" },
+  { id:"a11", date:"2026-04-04", name:"Oriental", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-100.23, method:"Debit" },
+  { id:"a12", date:"2026-04-04", name:"Fashionette", category:"ช้อปส่วนตัว/จิปาถะ", amount:-7.55, method:"Credit" },
+  { id:"a13", date:"2026-04-04", name:"Fashionette", category:"ช้อปส่วนตัว/จิปาถะ", amount:-8.26, method:"Credit" },
+  { id:"a14", date:"2026-04-05", name:"VGZ ประกันสุขภาพ", category:"ประกันสุขภาพ", amount:-149.9, method:"Debit" },
+  { id:"a15", date:"2026-04-05", name:"TINQ น้ำมัน", category:"น้ำมันรถ", amount:-92.03, method:"Credit" },
+  { id:"a16", date:"2026-04-05", name:"Cash withdraw", category:"อื่นๆ", amount:-100.0, method:"Credit" },
+  { id:"a17", date:"2026-04-05", name:"Google", category:"ช้อปส่วนตัว/จิปาถะ", amount:-13.99, method:"Credit" },
+  { id:"a18", date:"2026-04-05", name:"Outlet", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-38.6, method:"Credit" },
+  { id:"a19", date:"2026-04-06", name:"Aldi", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-79.99, method:"Credit" },
+  { id:"a20", date:"2026-04-06", name:"Kruidvat", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-17.83, method:"Credit" },
+  { id:"a21", date:"2026-04-06", name:"Bondora", category:"Bondora", amount:-22.74, method:"Debit" },
+  { id:"a22", date:"2026-04-07", name:"Hollannews โทรศัพท์", category:"ค่าโทรศัพท์", amount:-29.5, method:"Debit" },
+  { id:"a23", date:"2026-04-08", name:"Thuisbezorgd", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-29.16, method:"Credit" },
+  { id:"a24", date:"2026-04-08", name:"Grab", category:"อื่นๆ", amount:-15.62, method:"Credit" },
+  { id:"a25", date:"2026-04-09", name:"Cash withdraw", category:"อื่นๆ", amount:-250.0, method:"Credit" },
+  { id:"a26", date:"2026-04-09", name:"Aldi", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-42.54, method:"Credit" },
+  { id:"a27", date:"2026-04-10", name:"Shopee", category:"ช้อปส่วนตัว/จิปาถะ", amount:-8.88, method:"Credit" },
+  { id:"a28", date:"2026-04-10", name:"Blood tofu", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-19.08, method:"Credit" },
+  { id:"a29", date:"2026-04-11", name:"Thuisbezorgd", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-20.92, method:"Credit" },
+  { id:"a30", date:"2026-04-12", name:"Kosten geldopnamen", category:"อื่นๆ", amount:-8.75, method:"Credit" },
+  { id:"a31", date:"2026-04-12", name:"Aldi", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-121.48, method:"Credit" },
+  { id:"a32", date:"2026-04-12", name:"DUO", category:"Duo", amount:-46.23, method:"Debit" },
+  { id:"a33", date:"2026-04-15", name:"Shopee", category:"ช้อปส่วนตัว/จิปาถะ", amount:-11.14, method:"Credit" },
+  { id:"a34", date:"2026-04-15", name:"Jumbo", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-41.7, method:"Credit" },
+  { id:"a35", date:"2026-04-15", name:"Jumbo", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-2.99, method:"Credit" },
+  { id:"a36", date:"2026-04-15", name:"Cash withdraw", category:"อื่นๆ", amount:-70.0, method:"Credit" },
+  { id:"a37", date:"2026-04-16", name:"Kosten geldopnamen", category:"อื่นๆ", amount:-4.5, method:"Credit" },
+  { id:"a38", date:"2026-04-17", name:"Thuisbezorgd", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-32.95, method:"Credit" },
+  { id:"a39", date:"2026-04-18", name:"Aldi", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-99.9, method:"Credit" },
+  { id:"a40", date:"2026-04-19", name:"Youtube", category:"ช้อปส่วนตัว/จิปาถะ", amount:-0.54, method:"Credit" },
+  { id:"a41", date:"2026-04-22", name:"Tinq น้ำมัน", category:"น้ำมันรถ", amount:-30.53, method:"Credit" },
+  { id:"a42", date:"2026-04-22", name:"Jumbo", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-31.24, method:"Credit" },
+  { id:"a43", date:"2026-04-23", name:"Dropbox", category:"ช้อปส่วนตัว/จิปาถะ", amount:-11.99, method:"Credit" },
+  { id:"a44", date:"2026-04-23", name:"Grab Thai", category:"อื่นๆ", amount:-22.67, method:"Credit" },
+  { id:"a45", date:"2026-04-26", name:"Kruidvat", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-9.32, method:"Credit" },
+  { id:"a46", date:"2026-04-26", name:"Kogi", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-111.3, method:"Credit" },
+  { id:"a47", date:"2026-04-26", name:"Cash withdraw", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-50.0, method:"Credit" },
+  { id:"a48", date:"2026-04-27", name:"Keukenhof ticket", category:"อื่นๆ", amount:-42.0, method:"Credit" },
+  { id:"a49", date:"2026-04-27", name:"Car park Keukenhof", category:"อื่นๆ", amount:-9.0, method:"Credit" },
+  { id:"a50", date:"2026-04-27", name:"Coffee at Keukenhof", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-8.65, method:"Credit" },
+  { id:"a51", date:"2026-04-27", name:"Amex card vat", category:"อื่นๆ", amount:-6.5, method:"Credit" },
+  { id:"a52", date:"2026-04-27", name:"Cash withdraw vat", category:"อื่นๆ", amount:-4.5, method:"Credit" },
+  { id:"a53", date:"2026-04-27", name:"Fashionette", category:"ช้อปส่วนตัว/จิปาถะ", amount:-35.82, method:"Credit" },
+  { id:"a54", date:"2026-04-27", name:"Fashionette", category:"ช้อปส่วนตัว/จิปาถะ", amount:-11.22, method:"Credit" },
+  { id:"a55", date:"2026-04-27", name:"Soup at Keukenhof", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-16.45, method:"Credit" },
+  { id:"a56", date:"2026-04-28", name:"Microsoft", category:"อื่นๆ", amount:-99.0, method:"Debit" },
+  { id:"a57", date:"2026-04-28", name:"Postcode หวย", category:"หวย", amount:-21.0, method:"Debit" },
+  { id:"a58", date:"2026-04-28", name:"Simple โทรศัพท์", category:"ค่าโทรศัพท์", amount:-5.15, method:"Debit" },
+  { id:"a59", date:"2026-04-28", name:"ABN armo vat", category:"อื่นๆ", amount:-6.85, method:"Debit" },
+  { id:"a60", date:"2026-04-28", name:"ABN armo vat", category:"อื่นๆ", amount:-3.0, method:"Debit" },
+  { id:"a61", date:"2026-04-28", name:"ABN armo vat", category:"อื่นๆ", amount:-10.0, method:"Debit" },
+  { id:"a62", date:"2026-04-28", name:"Stone for garden", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-245.65, method:"Credit" },
+  { id:"a63", date:"2026-04-28", name:"Aldi", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-87.1, method:"Credit" },
+  { id:"a64", date:"2026-04-29", name:"Foodpoint", category:"ค่ากับข้าว/ของใช้ในบ้าน", amount:-32.4, method:"Credit" },
 ];
 
 // ===== FIREBASE =====
@@ -525,7 +650,7 @@ export default function App() {
                     <input className="inp" style={{background:"transparent",border:"none",borderBottom:"1px solid #1e2230",borderRadius:0,padding:"2px 0",fontSize:13,fontWeight:500}} value={e.name} onChange={ev=>updateExpense(e.id,"name",ev.target.value)}/>
                   </div>
                   <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                    <input style={{...S.inpSm,color:e.amountTHB?"#fb923c":"#f87171"}} value={e.amountTHB||e.amount.toFixed(2)} onChange={ev=>updateExpense(e.id,e.amountTHB?"amountTHB":"amount",ev.target.value)}/>
+                    <input style={{...S.inpSm,color:"#e8eaf0",background:"#1a1e2a",border:"1px solid #252a3a",width:90}} value={e.amountTHB||e.amount.toFixed(2)} onChange={ev=>updateExpense(e.id,e.amountTHB?"amountTHB":"amount",ev.target.value)}/>
                     <span style={{fontSize:10,color:"#4b5563"}}>{e.amountTHB?"฿":"€"}</span>
                     <button style={S.btnDanger} onClick={()=>removeExpense(e.id)}>🗑️</button>
                   </div>
@@ -584,6 +709,17 @@ export default function App() {
               }}>✅ ยืนยันรายการประจำเดือน</button>
             </div>
             <button style={{...S.btn,background:"#7c3aed"}} onClick={()=>setShowTransfer(true)}>🇹🇭 โอนเงินกลับไทย (Auto-Split)</button>
+            <div style={{marginTop:12,padding:12,background:"#1a0f1a",border:"1px solid #7c3aed33",borderRadius:12}}>
+              <div style={{fontSize:11,color:"#a78bfa",fontWeight:700,marginBottom:6}}>📥 นำเข้าข้อมูลจากไฟล์ Excel</div>
+              <div style={{fontSize:11,color:"#64748b",marginBottom:10}}>โหลดรายการ มี.ค.–เม.ย. 2026 จากไฟล์ต้นฉบับ (130 รายการ) — จะ**เพิ่ม**เข้าไปในข้อมูลปัจจุบัน</div>
+              <button style={{...S.btn,background:"#7c3aed"}} onClick={async ()=>{
+                const existing = transactions.map(t=>t.id);
+                const toAdd = DEFAULT_TRANSACTIONS.filter(t=>!existing.includes(t.id));
+                if(toAdd.length===0){ toast("ข้อมูลมีอยู่แล้วครบแล้ว ✅"); return; }
+                await saveTxns([...toAdd,...transactions]);
+                toast(`✅ นำเข้า ${toAdd.length} รายการแล้ว!`);
+              }}>📥 นำเข้าข้อมูล มี.ค.–เม.ย. ({DEFAULT_TRANSACTIONS.length} รายการ)</button>
+            </div>
           </div>
         )}
 
