@@ -270,11 +270,15 @@ export default function App() {
     setSyncing(false);
   };
 
-  const saveDebts = d => { setDebtsState(d); saveAll(d,expenses,transactions,settings,categories); };
-  const saveExpenses = e => { setExpensesState(e); saveAll(debts,e,transactions,settings,categories); };
-  const saveTxns = t => { setTxnsState(t); saveAll(debts,expenses,t,settings,categories); };
-  const saveSettings = s => { setSettingsState(s); saveAll(debts,expenses,transactions,s,categories); };
-  const saveCats = c => { setCategoriesState(c); saveAll(debts,expenses,transactions,settings,c); };
+  // ใช้ functional update + saveAll โดยตรงเพื่อป้องกัน stale closure
+  const saveDebts = (d) => { setDebtsState(d); saveAll(d, expenses, transactions, settings, categories); };
+  const saveExpenses = (e) => { setExpensesState(e); saveAll(debts, e, transactions, settings, categories); };
+  const saveTxns = (t) => { setTxnsState(t); saveAll(debts, expenses, t, settings, categories); };
+  const saveSettings = (s) => {
+    setSettingsState(s);
+    saveAll(debts, expenses, transactions, s, categories);
+  };
+  const saveCats = (c) => { setCategoriesState(c); saveAll(debts, expenses, transactions, settings, c); };
 
   // Stats
   const monthlyDebt = useMemo(() => debts.reduce((s,d)=>s+d.amount,0), [debts]);
@@ -387,12 +391,17 @@ export default function App() {
   const saveEditTx = () => {
     if(!editingTx) return;
     const newTxns = transactions.map(t=>t.id===editingTx.id?editingTx:t);
-    saveTxns(newTxns);
+    setTxnsState(newTxns);
+    saveAll(debts, expenses, newTxns, settings, categories);
     setEditingTx(null); toast("💾 แก้ไขรายการแล้ว");
   };
-  const deleteTx = (id) => { saveTxns(transactions.filter(t=>t.id!==id)); toast("🗑️ ลบรายการแล้ว","#f59e0b"); };
+  const deleteTx = (id) => {
+    const newTxns = transactions.filter(t=>t.id!==id);
+    setTxnsState(newTxns);
+    saveAll(debts, expenses, newTxns, settings, categories);
+    toast("🗑️ ลบรายการแล้ว","#f59e0b");
+  };
 
-  // Debt ops
   const updateDebt = (id,field,value) => {
     const updated = debts.map(d=>{
       if(d.id!==id) return d;
@@ -400,17 +409,27 @@ export default function App() {
       if(field==="amountTHB") u.amount=u.amountTHB/settings.exchangeRate;
       return u;
     });
-    saveDebts(updated); toast("💾 บันทึกแล้ว");
+    setDebtsState(updated);
+    saveAll(updated, expenses, transactions, settings, categories);
+    toast("💾 บันทึกแล้ว");
   };
   const addDebt = () => {
     if(!newDebt.name||(!newDebt.amount&&!newDebt.amountTHB)) return;
     const r=settings.exchangeRate;
     const d={...newDebt,id:uid(),amount:newDebt.currency==="THB"?(parseFloat(newDebt.amountTHB)||0)/r:parseFloat(newDebt.amount),amountTHB:newDebt.currency==="THB"?parseFloat(newDebt.amountTHB):undefined,totalInstallments:parseInt(newDebt.totalInstallments)||0,remaining:parseInt(newDebt.remaining)||0};
-    saveDebts([...debts,d]); setShowAddDebt(false);
+    const newDebts = [...debts, d];
+    setDebtsState(newDebts);
+    saveAll(newDebts, expenses, transactions, settings, categories);
+    setShowAddDebt(false);
     setNewDebt({name:"",amount:"",currency:"EUR",totalInstallments:"",remaining:"",category:"eur",icon:"💳",amountTHB:"",isRolling:false});
     toast(`✅ เพิ่มหนี้ "${d.name}" แล้ว`);
   };
-  const removeDebt = id => { saveDebts(debts.filter(d=>d.id!==id)); toast("🗑️ ลบหนี้แล้ว","#f59e0b"); };
+  const removeDebt = id => {
+    const newDebts = debts.filter(d=>d.id!==id);
+    setDebtsState(newDebts);
+    saveAll(newDebts, expenses, transactions, settings, categories);
+    toast("🗑️ ลบหนี้แล้ว","#f59e0b");
+  };
 
   // Expense ops
   const updateExpense = (id,field,value) => {
@@ -420,21 +439,33 @@ export default function App() {
       if(field==="amountTHB") u.amount=u.amountTHB/settings.exchangeRate;
       return u;
     });
-    saveExpenses(updated); toast("💾 บันทึกแล้ว");
+    setExpensesState(updated);
+    saveAll(debts, updated, transactions, settings, categories);
+    toast("💾 บันทึกแล้ว");
   };
   const addExpense = () => {
     if(!newExpense.name||(!newExpense.amount&&!newExpense.amountTHB)) return;
     const e={...newExpense,id:uid(),amount:newExpense.isTHB?(parseFloat(newExpense.amountTHB)||0)/settings.exchangeRate:parseFloat(newExpense.amount),amountTHB:newExpense.isTHB?parseFloat(newExpense.amountTHB):undefined};
-    saveExpenses([...expenses,e]); setShowAddExpense(false);
+    const newExpenses = [...expenses, e];
+    setExpensesState(newExpenses);
+    saveAll(debts, newExpenses, transactions, settings, categories);
+    setShowAddExpense(false);
     setNewExpense({name:"",amount:"",amountTHB:"",isTHB:false,icon:"💰"});
     toast(`✅ เพิ่ม "${e.name}" แล้ว`);
   };
-  const removeExpense = id => { saveExpenses(expenses.filter(e=>e.id!==id)); toast("🗑️ ลบแล้ว","#f59e0b"); };
+  const removeExpense = id => {
+    const newExpenses = expenses.filter(e=>e.id!==id);
+    setExpensesState(newExpenses);
+    saveAll(debts, newExpenses, transactions, settings, categories);
+    toast("🗑️ ลบแล้ว","#f59e0b");
+  };
 
   // Category ops
   const addCategory = () => {
     if(!newCat.trim()) return;
-    saveCats([...categories,newCat.trim()]);
+    const newCats = [...categories, newCat.trim()];
+    setCategoriesState(newCats);
+    saveAll(debts, expenses, transactions, settings, newCats);
     setNewCat(""); setShowAddCat(false); toast(`✅ เพิ่มหมวด "${newCat}" แล้ว`);
   };
 
