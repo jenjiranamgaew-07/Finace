@@ -123,8 +123,8 @@ function lsSave(data) {
 }
 
 async function fbSave(data) {
-  if (!db) return;
-  try { await setDoc(doc(db, "finance", "user_data"), data); } catch(e) { console.warn("Firebase save failed", e); }
+  if (!db) throw new Error("Firebase not initialized");
+  await setDoc(doc(db, "finance", "user_data"), data);
 }
 
 // ===== AI ANALYSIS =====
@@ -280,7 +280,13 @@ export default function App() {
     const data = {debts:d, expenses:e, transactions:t, settings:s, categories:c};
     lsSave(data);
     setSyncing(true);
-    await fbSave(data);
+    try {
+      await fbSave(data);
+    } catch(err) {
+      console.error("Firebase save failed:", err);
+      setNotif({msg:`⚠️ Firebase บันทึกไม่สำเร็จ: ${err.message} — ข้อมูลอยู่ใน localStorage แทน`, color:"#f59e0b"});
+      setTimeout(()=>setNotif(null), 5000);
+    }
     setSyncing(false);
   };
 
@@ -1226,4 +1232,4 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
       </div>
     </div>
   );
-}
+    }
