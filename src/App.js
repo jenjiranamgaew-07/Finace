@@ -412,21 +412,46 @@ export default function App() {
       // 1. ลองหาจาก DEBT_CATEGORY_MAP ก่อน (รายการเดิม)
       const mappedId = DEBT_CATEGORY_MAP[catKey] || null;
 
-      // 2. ถ้าไม่เจอใน map ให้ fuzzy match ชื่อหนี้ กับ category ที่บันทึก
-      //    - ชื่อหนี้ตรงกับ category (case-insensitive, trim)
-      //    - หรือ category contains ชื่อหนี้ หรือ ชื่อหนี้ contains category
       const findDebt = (id) => debts.find(d => d.id === id);
 
       let matchedDebt = null;
+
+      // Priority 1: hardcode map
       if (mappedId) {
         matchedDebt = findDebt(mappedId);
       }
+
       if (!matchedDebt) {
         const cat = catKey.trim().toLowerCase();
-        matchedDebt = debts.find(d => {
-          const name = d.name.trim().toLowerCase();
-          return name === cat || name.includes(cat) || cat.includes(name);
-        });
+
+        // Priority 2: exact name match (case-insensitive)
+        matchedDebt = debts.find(d => d.name.trim().toLowerCase() === cat);
+
+        // Priority 3: exact id match
+        if (!matchedDebt) {
+          matchedDebt = debts.find(d => d.id.toLowerCase() === cat);
+        }
+
+        // Priority 4: category fully contains debt name (longer match wins)
+        // e.g. "saldoje2" won't match debt "saldoje" if "saldoje2" debt exists
+        if (!matchedDebt) {
+          const candidates = debts.filter(d => {
+            const name = d.name.trim().toLowerCase();
+            return cat === name || cat.startsWith(name + " ") || cat.startsWith(name + "2") === false && cat.includes(name);
+          });
+          // pick the longest name match (most specific)
+          if (candidates.length > 0) {
+            matchedDebt = candidates.sort((a,b) => b.name.length - a.name.length)[0];
+          }
+        }
+
+        // Priority 5: debt name contains category (last resort, longest wins)
+        if (!matchedDebt) {
+          const candidates = debts.filter(d => d.name.trim().toLowerCase().includes(cat));
+          if (candidates.length > 0) {
+            matchedDebt = candidates.sort((a,b) => a.name.length - b.name.length)[0];
+          }
+        }
       }
 
       if (matchedDebt && matchedDebt.remaining > 0) {
@@ -1453,4 +1478,4 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
       </div>
     </div>
   );
-                                                     }
+                          }
