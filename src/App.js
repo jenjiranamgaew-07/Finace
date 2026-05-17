@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCZDHBslv9KRiTwtmm8dyzgMgz1YAZeV3E",
@@ -228,11 +228,9 @@ export default function App() {
   // Load: Firebase one-time load + localStorage fallback
   useEffect(() => {
     (async () => {
-      // โหลดจาก Firebase ครั้งเดียว ไม่ใช่ realtime listener
       if (db) {
         try {
-          const { getDoc, doc: firestoreDoc } = await import("firebase/firestore");
-          const snap = await getDoc(firestoreDoc(db, "finance", "user_data"));
+          const snap = await getDoc(doc(db, "finance", "user_data"));
           if (snap.exists()) {
             const data = snap.data();
             if (data.debts) setDebtsState(data.debts);
@@ -242,7 +240,6 @@ export default function App() {
             if (data.categories) setCategoriesState(data.categories);
             lsSave(data);
           } else {
-            // Firebase ว่าง โหลดจาก localStorage แทน
             const ls = lsLoad();
             if (ls) {
               if (ls.debts) setDebtsState(ls.debts);
@@ -254,7 +251,6 @@ export default function App() {
           }
         } catch(err) {
           console.warn("Firebase load error:", err);
-          // Fallback to localStorage
           const ls = lsLoad();
           if (ls) {
             if (ls.debts) setDebtsState(ls.debts);
