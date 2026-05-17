@@ -401,23 +401,45 @@ export default function App() {
   );
 
   // ===== AUTO REDUCE INSTALLMENTS =====
+  // จับคู่อัตโนมัติ: หมวดที่บันทึก ต้องตรงกับชื่อหนี้ หรือ id หรือ hardcode map
   const addTxnAndReduceDebt = (tx) => {
     const newTxns = [tx, ...transactions];
     let newDebts = [...debts];
-    
-    // Only exact category match — ไม่ fuzzy match เพื่อป้องกันหักผิดรายการ
-    const catKey = tx.category;
-    const debtId = DEBT_CATEGORY_MAP[catKey] || null;
-    
-    if (debtId && tx.amount < 0) {
-      newDebts = debts.map(d => {
-        if (d.id === debtId && d.remaining > 0) {
-          return {...d, remaining: d.remaining - 1};
-        }
-        return d;
-      });
+
+    if (tx.amount < 0) {
+      const catKey = tx.category;
+
+      // 1. ลองหาจาก DEBT_CATEGORY_MAP ก่อน (รายการเดิม)
+      const mappedId = DEBT_CATEGORY_MAP[catKey] || null;
+
+      // 2. ถ้าไม่เจอใน map ให้ fuzzy match ชื่อหนี้ กับ category ที่บันทึก
+      //    - ชื่อหนี้ตรงกับ category (case-insensitive, trim)
+      //    - หรือ category contains ชื่อหนี้ หรือ ชื่อหนี้ contains category
+      const findDebt = (id) => debts.find(d => d.id === id);
+
+      let matchedDebt = null;
+      if (mappedId) {
+        matchedDebt = findDebt(mappedId);
+      }
+      if (!matchedDebt) {
+        const cat = catKey.trim().toLowerCase();
+        matchedDebt = debts.find(d => {
+          const name = d.name.trim().toLowerCase();
+          return name === cat || name.includes(cat) || cat.includes(name);
+        });
+      }
+
+      if (matchedDebt && matchedDebt.remaining > 0) {
+        newDebts = debts.map(d =>
+          d.id === matchedDebt.id && d.remaining > 0
+            ? {...d, remaining: d.remaining - 1}
+            : d
+        );
+        // Show toast indicating debt was reduced
+        setTimeout(() => toast(`📉 ${matchedDebt.name} เหลือ ${matchedDebt.remaining - 1} งวด`), 400);
+      }
     }
-    
+
     setTxnsState(newTxns);
     setDebtsState(newDebts);
     saveAll(newDebts, expenses, newTxns, settings, categories);
@@ -1080,7 +1102,16 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
                 </div>
                 <div style={{display:"flex",gap:8}}>
                   <select className="inp-focus" style={{...S.inp,flex:1}} value={qCat} onChange={e=>setQCat(e.target.value)}>
-                    {categories.map(c=><option key={c} style={{background:"#1a1e2a"}}>{c}</option>)}
+                    <optgroup label="หมวดทั่วไป" style={{background:"#1a1e2a"}}>
+                      {categories.map(c=><option key={c} style={{background:"#1a1e2a"}}>{c}</option>)}
+                    </optgroup>
+                    {debts.filter(d=>!categories.includes(d.name)).length>0&&(
+                      <optgroup label="หนี้ (จากหน้าหนี้สิน)" style={{background:"#1a1e2a"}}>
+                        {debts.filter(d=>!categories.includes(d.name)).map(d=>(
+                          <option key={d.id} value={d.name} style={{background:"#1a1e2a"}}>{d.icon} {d.name}</option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
                   <button style={{...S.btnSm,flexShrink:0}} onClick={()=>setShowAddCat(true)}>+ หมวด</button>
                 </div>
@@ -1422,4 +1453,4 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
       </div>
     </div>
   );
-  }
+                                                     }
