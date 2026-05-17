@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, onSnapshot, setDoc } from "firebase/firestore";
 
@@ -262,13 +262,13 @@ export default function App() {
 
   const toast = (msg, color="#22c55e") => { setNotif({msg,color}); setTimeout(()=>setNotif(null),3500); };
 
-  const saveAll = useCallback(async (d, e, t, s, c) => {
+  const saveAll = async (d, e, t, s, c) => {
     const data = {debts:d, expenses:e, transactions:t, settings:s, categories:c};
-    lsSave(data); // immediate localStorage
+    lsSave(data);
     setSyncing(true);
     await fbSave(data);
     setSyncing(false);
-  }, []);
+  };
 
   const saveDebts = d => { setDebtsState(d); saveAll(d,expenses,transactions,settings,categories); };
   const saveExpenses = e => { setExpensesState(e); saveAll(debts,e,transactions,settings,categories); };
@@ -322,20 +322,13 @@ export default function App() {
   const maxBar = Math.max(...projection.map(s=>Math.abs(s.cumulative)),1);
 
   // ===== AUTO REDUCE INSTALLMENTS =====
-  // When saving a transaction in a debt category, reduce remaining installments
   const addTxnAndReduceDebt = (tx) => {
     const newTxns = [tx, ...transactions];
     let newDebts = [...debts];
     
-    // Find debt matching category
+    // Only exact category match — ไม่ fuzzy match เพื่อป้องกันหักผิดรายการ
     const catKey = tx.category;
-    let debtId = DEBT_CATEGORY_MAP[catKey];
-    
-    // Also check by name match
-    if (!debtId) {
-      const match = debts.find(d => catKey.includes(d.name) || d.name.includes(catKey) || catKey === d.category);
-      if (match) debtId = match.id;
-    }
+    const debtId = DEBT_CATEGORY_MAP[catKey] || null;
     
     if (debtId && tx.amount < 0) {
       newDebts = debts.map(d => {
@@ -642,7 +635,7 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
 
       {/* TABS */}
       <div style={{display:"flex",gap:4,padding:"0 16px",marginBottom:14,overflowX:"auto",scrollbarWidth:"none"}}>
-        {[{id:"dashboard",i:"📊",l:"ภาพรวม"},{id:"ai",i:"🤖",l:"AI"},{id:"debts",i:"💳",l:"หนี้สิน"},{id:"expenses",i:"🧾",l:"ค่าจ่าย"},{id:"add",i:"✏️",l:"บันทึก"},{id:"history",i:"📋",l:"ประวัติ"},{id:"report",i:"📄",l:"Report"}].map(t=>(
+        {[{id:"dashboard",i:"📊",l:"ภาพรวม"},{id:"debts",i:"💳",l:"หนี้สิน"},{id:"expenses",i:"🧾",l:"ค่าจ่าย"},{id:"add",i:"✏️",l:"บันทึก"},{id:"history",i:"📋",l:"ประวัติ"},{id:"report",i:"📄",l:"Report"}].map(t=>(
           <button key={t.id} className="tab-btn" onClick={()=>setActiveTab(t.id)} style={{background:activeTab===t.id?"#3b82f6":"#111520",color:activeTab===t.id?"white":"#64748b",border:`1px solid ${activeTab===t.id?"#3b82f6":"#1e2535"}`,borderRadius:10,padding:"7px 12px",fontSize:11,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"inherit",flexShrink:0}}>{t.i} {t.l}</button>
         ))}
       </div>
@@ -750,74 +743,6 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
         )}
 
         {/* ===== AI TAB ===== */}
-        {activeTab==="ai" && (
-          <div>
-            <div style={S.card}>
-              <span style={S.label}>🤖 AI วิเคราะห์การเงิน</span>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
-                {[
-                  {id:"summary",icon:"📊",label:"สรุปพฤติกรรม"},
-                  {id:"forecast",icon:"🔮",label:"Forecast"},
-                  {id:"score",icon:"🏆",label:"Score"}
-                ].map(a=>(
-                  <button key={a.id} onClick={()=>runAI(a.id)} disabled={aiLoading} style={{background:aiTab===a.id&&aiResult?"#1e3a5f":"#111520",border:`1px solid ${aiTab===a.id&&aiResult?"#3b82f6":"#1e2535"}`,borderRadius:12,padding:"12px 8px",cursor:"pointer",textAlign:"center",opacity:aiLoading?0.6:1}}>
-                    <div style={{fontSize:20,marginBottom:4}}>{a.icon}</div>
-                    <div style={{fontSize:11,color:"#94a3b8",fontFamily:"inherit"}}>{a.label}</div>
-                  </button>
-                ))}
-              </div>
-              {aiLoading && (
-                <div style={{textAlign:"center",padding:"24px 0",color:"#64748b"}}>
-                  <div style={{fontSize:32,animation:"pulse 1s infinite",marginBottom:8}}>🤔</div>
-                  <div style={{fontSize:13}}>AI กำลังวิเคราะห์...</div>
-                </div>
-              )}
-              {aiResult && !aiLoading && (
-                <div style={{background:"#0a1520",borderRadius:12,padding:14,border:"1px solid #1e3a5f"}}>
-                  <div style={{fontSize:11,color:"#3b82f6",fontWeight:700,marginBottom:8,textTransform:"uppercase",letterSpacing:"0.08em"}}>
-                    {aiTab==="summary"?"📊 สรุปพฤติกรรม":aiTab==="forecast"?"🔮 Forecast":"🏆 Financial Score"}
-                  </div>
-                  <div className="ai-text">{aiResult}</div>
-                </div>
-              )}
-              {!aiResult && !aiLoading && (
-                <div style={{textAlign:"center",padding:"20px 0",color:"#374151"}}>
-                  <div style={{fontSize:40,marginBottom:8}}>🤖</div>
-                  <div style={{fontSize:13,color:"#475569"}}>เลือกหัวข้อที่ต้องการวิเคราะห์</div>
-                </div>
-              )}
-            </div>
-
-            {/* Quick spending summary */}
-            <div style={S.card}>
-              <span style={S.label}>📊 สรุปเดือนนี้</span>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
-                <div style={{background:"#0a1f0a",borderRadius:10,padding:12}}>
-                  <div style={{fontSize:11,color:"#475569",marginBottom:4}}>รายรับ</div>
-                  <div style={{fontSize:18,fontWeight:700,color:"#4ade80",fontFamily:"'Space Mono',monospace"}}>{fmt(thisMonthIncome)}</div>
-                </div>
-                <div style={{background:"#1f0a0a",borderRadius:10,padding:12}}>
-                  <div style={{fontSize:11,color:"#475569",marginBottom:4}}>รายจ่าย</div>
-                  <div style={{fontSize:18,fontWeight:700,color:"#f87171",fontFamily:"'Space Mono',monospace"}}>{fmt(thisMonthSpent)}</div>
-                </div>
-              </div>
-              {/* Category breakdown */}
-              {Object.entries(thisMonthTxns.filter(t=>t.amount<0).reduce((acc,t)=>{acc[t.category]=(acc[t.category]||0)+Math.abs(t.amount);return acc;},{})).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([cat,amt])=>{
-                const pct = Math.round((amt/Math.max(thisMonthSpent,1))*100);
-                return (
-                  <div key={cat} style={{marginBottom:8}}>
-                    <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:2}}>
-                      <span style={{color:"#94a3b8"}}>{cat}</span>
-                      <span style={{color:"#f87171",fontFamily:"'Space Mono',monospace",fontSize:11}}>{fmt(amt)} ({pct}%)</span>
-                    </div>
-                    <div style={S.prog}><div style={{height:"100%",borderRadius:3,width:`${pct}%`,background:"#3b82f6"}}/></div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {/* ===== DEBTS ===== */}
         {activeTab==="debts" && (
           <div>
@@ -1247,7 +1172,7 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
 
       {/* BOTTOM NAV */}
       <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"#080a10",borderTop:"1px solid #111827",display:"flex",padding:"8px 0 10px"}}>
-        {[{id:"dashboard",i:"📊",l:"ภาพรวม"},{id:"ai",i:"🤖",l:"AI"},{id:"debts",i:"💳",l:"หนี้สิน"},{id:"add",i:"✏️",l:"บันทึก"},{id:"history",i:"📋",l:"ประวัติ"},{id:"report",i:"📄",l:"Report"}].map(t=>(
+        {[{id:"dashboard",i:"📊",l:"ภาพรวม"},{id:"debts",i:"💳",l:"หนี้สิน"},{id:"add",i:"✏️",l:"บันทึก"},{id:"history",i:"📋",l:"ประวัติ"},{id:"report",i:"📄",l:"Report"}].map(t=>(
           <button key={t.id} onClick={()=>setActiveTab(t.id)} style={{flex:1,background:"none",border:"none",color:activeTab===t.id?"#60a5fa":"#374151",cursor:"pointer",fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",gap:1,padding:"4px 0"}}>
             <span style={{fontSize:16}}>{t.i}</span>
             <span style={{fontSize:8,fontWeight:activeTab===t.id?700:400}}>{t.l}</span>
