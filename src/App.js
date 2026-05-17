@@ -365,36 +365,71 @@ export default function App() {
   const daysLeft = balance / dailyBurn;
   const forecastDate = new Date(); forecastDate.setDate(forecastDate.getDate() + Math.round(daysLeft));
 
-  // Projection
-  const projection = useMemo(() => {
+  // Smart rolling projection:
+  // - เดือนที่ผ่านแล้วและมีบันทึก → ใช้ยอดจริง
+  // - เดือนที่ยังไม่มาหรือไม่มีบันทึก → ใช้ remaining จริงคำนวณ (ไม่นับถอยหลังจากเวลา)
+  // - ยอดทบสะสมทุกเดือน
+  const { projection, actualProjection } = useMemo(() => {
     const fixedExp = expenses.reduce((s,e)=>s+e.amount,0);
-    let carry = 0; const res = [];
-    for (let m=4; m<12; m++) {
-      const activeDebt = debts.filter(d=>d.remaining-(m-4)>0).reduce((s,d)=>s+d.amount,0);
-      const bal = settings.monthlyIncome - activeDebt - fixedExp;
-      carry += bal;
-      res.push({month:MONTHS[m], balance:bal, cumulative:carry});
-    }
-    return res;
-  }, [debts, expenses, settings]);
-  const yearEndSavings = projection[projection.length-1]?.cumulative||0;
+    const nowM = new Date().getMonth();
+    const nowY = new Date().getFullYear();
 
-  // Actual cumulative savings from real transactions (per month May-Dec 2026)
-  const actualProjection = useMemo(() => {
-    const res = [];
+    // Track remaining per debt as we simulate month by month
+    let simRemaining = {}; 
+    debts.forEach(d => { simRemaining[d.id] = d.remaining; });
+
     let carry = 0;
+    const proj = [];
+    const actual = [];
+
     for (let m = 4; m < 12; m++) {
       const monthTxns = transactions.filter(t => {
         const d = new Date(t.date);
         return d.getFullYear() === 2026 && d.getMonth() === m;
       });
-      const net = monthTxns.reduce((s, t) => s + t.amount, 0);
       const hasTxns = monthTxns.length > 0;
-      if (hasTxns) carry += net;
-      res.push({ month: MONTHS[m], net, cumulative: hasTxns ? carry : null });
+      const isPast = (nowY === 2026 && m < nowM) || nowY > 2026;
+      const isCurrent = nowY === 2026 && m === nowM;
+
+      if (hasTxns) {
+        // ใช้ยอดจริงจากบันทึก
+        const net = monthTxns.reduce((s,t) => s + t.amount, 0);
+        carry += net;
+        const actualInc = monthTxns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+        const actualExp = monthTxns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
+
+        // For projection: use remaining as-is for this month's debts
+        const debtTotal = debts.filter(d => simRemaining[d.id] > 0).reduce((s,d)=>s+d.amount,0);
+        const bal = settings.monthlyIncome - debtTotal - fixedExp;
+
+        // Reduce simRemaining for debts that were paid this month
+        debts.forEach(d => {
+          const paid = monthTxns.some(t => {
+            const cat = t.category?.trim().toLowerCase();
+            const name = d.name?.trim().toLowerCase();
+            return t.amount < 0 && (cat === name || cat?.includes(name) || name?.includes(cat));
+          });
+          if (paid && simRemaining[d.id] > 0) simRemaining[d.id]--;
+        });
+
+        proj.push({ month: MONTHS[m], balance: bal, cumulative: carry, debtTotal, fixedExp, activeDebts: debts.filter(d=>simRemaining[d.id]>0) });
+        actual.push({ month: MONTHS[m], net, cumulative: carry, income: actualInc, expense: actualExp, hasData: true });
+      } else {
+        // ไม่มีบันทึก → ใช้ remaining จริงตอนนี้ในการคำนวณ
+        const debtTotal = debts.filter(d => simRemaining[d.id] > 0).reduce((s,d)=>s+d.amount,0);
+        const bal = settings.monthlyIncome - debtTotal - fixedExp;
+        carry += bal;
+
+        proj.push({ month: MONTHS[m], balance: bal, cumulative: carry, debtTotal, fixedExp, activeDebts: debts.filter(d=>simRemaining[d.id]>0) });
+        actual.push({ month: MONTHS[m], net: null, cumulative: null, hasData: false });
+
+        // Assume debts paid in future months (optimistic projection)
+        debts.forEach(d => { if (simRemaining[d.id] > 0) simRemaining[d.id]--; });
+      }
     }
-    return res;
-  }, [transactions]);
+    return { projection: proj, actualProjection: actual };
+  }, [debts, expenses, transactions, settings]);
+  const yearEndSavings = projection[projection.length-1]?.cumulative||0;
 
   const maxBar = Math.max(
     ...projection.map(s => Math.abs(s.cumulative)),
@@ -895,16 +930,16 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
               {monthDetail && (()=>{
                 const mi = monthDetail.monthIndex; // 0-based month (4=May)
                 const proj = projection[mi-4];
-                const actual = actualProjection[mi-4];
-                const fixedExp = expenses.reduce((s,e)=>s+e.amount,0);
-                const activeDebt = debts.filter(d=>!d.isRolling&&d.remaining-(mi-4)>0);
-                const debtTotal = activeDebt.reduce((s,d)=>s+d.amount,0);
-                const rollingDebt = debts.filter(d=>d.isRolling);
-                // Actual txns for this month
+                const actualM = actualProjection[mi-4];
+                // ใช้ข้อมูลที่ projection คำนวณไว้แล้ว (rolling จากจำนวนงวดจริง)
+                const activeDebt = proj?.activeDebts || [];
+                const debtTotal = proj?.debtTotal || 0;
+                const fixedExp = proj?.fixedExp || expenses.reduce((s,e)=>s+e.amount,0);
+                // Actual txns
                 const monthTxns = transactions.filter(t=>{const d=new Date(t.date);return d.getFullYear()===2026&&d.getMonth()===mi;});
-                const actualInc = monthTxns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-                const actualExp = monthTxns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
-                const hasActual = monthTxns.length > 0;
+                const actualInc = actualM?.income ?? monthTxns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+                const actualExp = actualM?.expense ?? monthTxns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
+                const hasActual = actualM?.hasData || monthTxns.length > 0;
                 return (
                   <div style={{marginTop:10,background:"#071525",border:"1px solid #1e3a5f",borderRadius:10,padding:"12px 14px"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
@@ -936,11 +971,11 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
                       </div>
                       <div style={{height:1,background:"#1e2535",margin:"2px 0"}}/>
                       <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:700}}>
-                        <span style={{color:"#e2e8f0"}}>คงเหลือ</span>
+                        <span style={{color:"#e2e8f0"}}>คงเหลือเดือนนี้</span>
                         <span style={{color:proj.balance>=0?"#4ade80":"#f87171",fontFamily:"'Space Mono',monospace"}}>{proj.balance>=0?"+":""}{fmt(proj.balance)}</span>
                       </div>
                       <div style={{display:"flex",justifyContent:"space-between",fontSize:11}}>
-                        <span style={{color:"#475569"}}>สะสม (ทฤษฎี)</span>
+                        <span style={{color:"#475569"}}>ยอดสะสม (ทบจากก่อนหน้า)</span>
                         <span style={{color:proj.cumulative>=0?"#4ade80":"#f87171",fontFamily:"'Space Mono',monospace"}}>{proj.cumulative>=0?"+":""}{fmt(proj.cumulative)}</span>
                       </div>
                     </div>
@@ -1570,4 +1605,4 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
       </div>
     </div>
   );
-                }
+          }
