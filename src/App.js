@@ -57,6 +57,18 @@ const DEFAULT_EXPENSES = [
   { id:"electricity", name:"ค่าไฟที่ไทย", amountTHB:2000, amount:2000/35, icon:"💡" },
 ];
 
+const DEFAULT_BUDGETS = [
+  { id:"b_grocery",  category:"ค่ากับข้าว/ของใช้",  budget:800,  currency:"EUR", icon:"🛒" },
+  { id:"b_fuel",     category:"น้ำมันรถ",            budget:200,  currency:"EUR", icon:"⛽" },
+  { id:"b_personal", category:"ช้อปส่วนตัว",          budget:100,  currency:"EUR", icon:"👜" },
+  { id:"b_misc",     category:"อื่นๆ",               budget:100,  currency:"EUR", icon:"💰" },
+  { id:"b_lottery",  category:"อื่นๆ",               budget:21,   currency:"EUR", icon:"🎰" },
+  { id:"b_health",   category:"ประกัน",              budget:149,  currency:"EUR", icon:"🏥" },
+  { id:"b_phone",    category:"ค่าโทรศัพท์",          budget:50,   currency:"EUR", icon:"📱" },
+  { id:"b_mom",      category:"ให้แม่",               budget:5000, currency:"THB", icon:"👩" },
+  { id:"b_elec",     category:"ค่าไฟที่ไทย",          budget:2000, currency:"THB", icon:"💡" },
+];
+
 const DEBT_CATEGORY_MAP = {
   "หนี้บ้านไทย ABN": "abn_home",
   "บัตรเครดิต ABN": "abn_credit",
@@ -191,6 +203,11 @@ export default function App() {
   const [settings, setSettingsState] = useState(DEFAULT_SETTINGS);
   const [categories, setCategoriesState] = useState(DEFAULT_CATEGORIES);
 
+  const [budgets, setBudgetsState] = useState(DEFAULT_BUDGETS);
+  const [showAddBudget, setShowAddBudget] = useState(false);
+  const [newBudget, setNewBudget] = useState({category:"", budget:"", currency:"EUR", icon:"💰"});
+  const [budgetAlert, setBudgetAlert] = useState(null);
+
   const [activeTab, setActiveTab] = useState("dashboard");
   const [notif, setNotif] = useState(null);
 
@@ -251,6 +268,7 @@ export default function App() {
             if (data.transactions) setTxnsState(data.transactions);
             if (data.settings) setSettingsState(data.settings);
             if (data.categories) setCategoriesState(data.categories);
+            if (data.budgets) setBudgetsState(data.budgets);
             lsSave(data);
           } else {
             const ls = lsLoad();
@@ -260,6 +278,7 @@ export default function App() {
               if (ls.transactions) setTxnsState(ls.transactions);
               if (ls.settings) setSettingsState(ls.settings);
               if (ls.categories) setCategoriesState(ls.categories);
+              if (ls.budgets) setBudgetsState(ls.budgets);
             }
           }
         } catch(err) {
@@ -289,8 +308,8 @@ export default function App() {
 
   const toast = (msg, color="#22c55e") => { setNotif({msg,color}); setTimeout(()=>setNotif(null),3500); };
 
-  const saveAll = async (d, e, t, s, c) => {
-    const data = {debts:d, expenses:e, transactions:t, settings:s, categories:c};
+  const saveAll = async (d, e, t, s, c, b) => {
+    const data = {debts:d, expenses:e, transactions:t, settings:s, categories:c, budgets:b||budgets};
     lsSave(data);
     setSyncing(true);
     try {
@@ -311,7 +330,8 @@ export default function App() {
     setSettingsState(s);
     saveAll(debts, expenses, transactions, s, categories);
   };
-  const saveCats = (c) => { setCategoriesState(c); saveAll(debts, expenses, transactions, settings, c); };
+  const saveCats = (c) => { setCategoriesState(c); saveAll(debts, expenses, transactions, settings, c, budgets); };
+  const saveBudgets = (b) => { setBudgetsState(b); saveAll(debts, expenses, transactions, settings, categories, b); };
 
   // Stats
   const monthlyDebt = useMemo(() => debts.reduce((s,d)=>s+d.amount,0), [debts]);
@@ -356,7 +376,29 @@ export default function App() {
     return res;
   }, [debts, expenses, settings]);
   const yearEndSavings = projection[projection.length-1]?.cumulative||0;
-  const maxBar = Math.max(...projection.map(s=>Math.abs(s.cumulative)),1);
+
+  // Actual cumulative savings from real transactions (per month May-Dec 2026)
+  const actualProjection = useMemo(() => {
+    const res = [];
+    let carry = 0;
+    for (let m = 4; m < 12; m++) {
+      const monthTxns = transactions.filter(t => {
+        const d = new Date(t.date);
+        return d.getFullYear() === 2026 && d.getMonth() === m;
+      });
+      const net = monthTxns.reduce((s, t) => s + t.amount, 0);
+      const hasTxns = monthTxns.length > 0;
+      if (hasTxns) carry += net;
+      res.push({ month: MONTHS[m], net, cumulative: hasTxns ? carry : null });
+    }
+    return res;
+  }, [transactions]);
+
+  const maxBar = Math.max(
+    ...projection.map(s => Math.abs(s.cumulative)),
+    ...actualProjection.filter(s => s.cumulative !== null).map(s => Math.abs(s.cumulative)),
+    1
+  );
 
   // ===== AUTO REDUCE INSTALLMENTS =====
   const addTxnAndReduceDebt = (tx) => {
@@ -417,6 +459,27 @@ export default function App() {
     if (qIsThb) amtEUR = amtEUR / settings.exchangeRate;
     const tx = {id:uid(),date:qDate,name:qName,category:qCat,amount:isInc?amtEUR:-amtEUR,method:qMethod};
     addTxnAndReduceDebt(tx);
+
+    // Check budget for this category
+    if (tx.amount < 0) {
+      const matchBudget = budgets.find(b => b.category === qCat);
+      if (matchBudget) {
+        const nowM = new Date(qDate).getMonth();
+        const nowY = new Date(qDate).getFullYear();
+        const spent = [...transactions, tx].filter(t => {
+          const d = new Date(t.date);
+          return t.category === qCat && t.amount < 0 && d.getMonth() === nowM && d.getFullYear() === nowY;
+        }).reduce((s,t) => s + Math.abs(t.amount), 0);
+        const budgetEUR = matchBudget.currency === "THB" ? matchBudget.budget / settings.exchangeRate : matchBudget.budget;
+        const pct = Math.round((spent / budgetEUR) * 100);
+        if (pct >= 100) {
+          setBudgetAlert({ category: qCat, spent, budget: budgetEUR, pct, over: true });
+        } else if (pct >= 80) {
+          setBudgetAlert({ category: qCat, spent, budget: budgetEUR, pct, over: false });
+        }
+      }
+    }
+
     setQName(""); setQAmt(""); toast(`✅ บันทึก "${qName}" แล้ว`);
   };
 
@@ -733,21 +796,48 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
             {/* Projection Chart */}
             <div style={S.card}>
               <span style={S.label}>📈 ยอดสะสม พ.ค.–ธ.ค. 2026</span>
-              <div style={{display:"flex",gap:4,alignItems:"flex-end",height:80,marginBottom:6}}>
+              {/* Legend */}
+              <div style={{display:"flex",gap:12,marginBottom:8,fontSize:10}}>
+                <span style={{display:"flex",alignItems:"center",gap:4,color:"#4ade80"}}><span style={{width:10,height:10,borderRadius:2,background:"#22c55e",display:"inline-block"}}/> ทฤษฎี</span>
+                <span style={{display:"flex",alignItems:"center",gap:4,color:"#60a5fa"}}><span style={{width:10,height:10,borderRadius:2,background:"#3b82f6",display:"inline-block"}}/> จริง (บันทึก)</span>
+              </div>
+              <div style={{display:"flex",gap:4,alignItems:"flex-end",height:90,marginBottom:6}}>
                 {projection.map((s,i)=>{
-                  const h = Math.max(4,Math.abs(s.cumulative)/maxBar*68);
+                  const hT = Math.max(4,Math.abs(s.cumulative)/maxBar*68);
+                  const actual = actualProjection[i];
+                  const hA = actual.cumulative !== null ? Math.max(4,Math.abs(actual.cumulative)/maxBar*68) : 0;
+                  const aColor = actual.cumulative !== null ? (actual.cumulative>=0?"#3b82f6":"#f87171") : "transparent";
                   return (
                     <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
-                      <div style={{fontSize:8,color:s.cumulative>=0?"#4ade80":"#f87171",fontFamily:"'Space Mono',monospace",textAlign:"center",lineHeight:1}}>{s.cumulative>=0?"+":""}{Math.round(s.cumulative/100)*100}</div>
-                      <div style={{width:"100%",height:h,background:s.cumulative>=0?"linear-gradient(180deg,#22c55e88,#16a34a)":"linear-gradient(180deg,#ef444488,#dc2626)",borderRadius:"4px 4px 0 0",border:`1px solid ${s.cumulative>=0?"#22c55e44":"#ef444444"}`}}/>
+                      {/* actual label */}
+                      {actual.cumulative !== null && (
+                        <div style={{fontSize:7,color:actual.cumulative>=0?"#60a5fa":"#f87171",fontFamily:"'Space Mono',monospace",textAlign:"center",lineHeight:1,marginBottom:1}}>
+                          {actual.cumulative>=0?"+":""}{Math.round(actual.cumulative)}
+                        </div>
+                      )}
+                      <div style={{width:"100%",display:"flex",gap:2,alignItems:"flex-end",height:68}}>
+                        {/* Theory bar */}
+                        <div style={{flex:1,height:hT,background:s.cumulative>=0?"linear-gradient(180deg,#22c55e88,#16a34a)":"linear-gradient(180deg,#ef444488,#dc2626)",borderRadius:"4px 4px 0 0",border:`1px solid ${s.cumulative>=0?"#22c55e44":"#ef444444"}`}}/>
+                        {/* Actual bar */}
+                        {actual.cumulative !== null
+                          ? <div style={{flex:1,height:hA,background:actual.cumulative>=0?"linear-gradient(180deg,#3b82f688,#1d4ed8)":"linear-gradient(180deg,#f8717188,#dc2626)",borderRadius:"4px 4px 0 0",border:`1px solid ${aColor}44`}}/>
+                          : <div style={{flex:1,height:4,background:"#1e293b",borderRadius:"4px 4px 0 0",opacity:0.3}}/>
+                        }
+                      </div>
                       <div style={{fontSize:8,color:"#374151"}}>{s.month}</div>
                     </div>
                   );
                 })}
               </div>
-              <div style={{background:"#0d1520",borderRadius:8,padding:"8px 12px",display:"flex",justifyContent:"space-between",fontSize:12}}>
-                <span style={{color:"#64748b"}}>สิ้นปี 2026</span>
-                <span style={{color:yearEndSavings>=0?"#fde68a":"#f87171",fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{yearEndSavings>=0?"+":""}{fmt(yearEndSavings)}</span>
+              <div style={{background:"#0d1520",borderRadius:8,padding:"8px 12px",display:"flex",justifyContent:"space-between",fontSize:11,gap:8}}>
+                <div style={{display:"flex",flexDirection:"column",gap:2}}>
+                  <span style={{color:"#64748b",fontSize:10}}>ทฤษฎีสิ้นปี</span>
+                  <span style={{color:yearEndSavings>=0?"#4ade80":"#f87171",fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{yearEndSavings>=0?"+":""}{fmt(yearEndSavings)}</span>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:2,alignItems:"flex-end"}}>
+                  <span style={{color:"#64748b",fontSize:10}}>จริงล่าสุด</span>
+                  {(()=>{const last=actualProjection.filter(s=>s.cumulative!==null).slice(-1)[0]; return last?<span style={{color:last.cumulative>=0?"#60a5fa":"#f87171",fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{last.cumulative>=0?"+":""}{fmt(last.cumulative)}</span>:<span style={{color:"#475569",fontSize:10}}>ยังไม่มีข้อมูล</span>;})()}
+                </div>
               </div>
             </div>
 
@@ -916,6 +1006,63 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
         {/* ===== ADD ===== */}
         {activeTab==="add" && (
           <div>
+
+            {/* Budget Alert */}
+            {budgetAlert && (
+              <div style={{background: budgetAlert.over ? "#3b0000" : "#3b2000", border:`1px solid ${budgetAlert.over?"#ef4444":"#f59e0b"}`, borderRadius:12, padding:"12px 14px", marginBottom:12, display:"flex", justifyContent:"space-between", alignItems:"flex-start"}}>
+                <div>
+                  <div style={{fontSize:13, fontWeight:700, color: budgetAlert.over?"#f87171":"#fbbf24", marginBottom:4}}>
+                    {budgetAlert.over ? "🚨 เกินงบ!" : "⚠️ ใกล้เกินงบ!"} {budgetAlert.category}
+                  </div>
+                  <div style={{fontSize:11, color:"#94a3b8"}}>
+                    ใช้ไป {fmt(budgetAlert.spent)} / งบ {fmt(budgetAlert.budget)} ({budgetAlert.pct}%)
+                  </div>
+                </div>
+                <button onClick={()=>setBudgetAlert(null)} style={{background:"none",border:"none",color:"#475569",fontSize:16,cursor:"pointer",padding:"0 4px"}}>✕</button>
+              </div>
+            )}
+
+            {/* Budget Tracker */}
+            <div style={S.card}>
+              <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10}}>
+                <span style={S.label}>📊 งบรายเดือนนี้</span>
+                <button style={{...S.btnSm, fontSize:11}} onClick={()=>setShowAddBudget(true)}>+ เพิ่มงบ</button>
+              </div>
+              {budgets.map(b => {
+                const nowM = new Date().getMonth();
+                const nowY = new Date().getFullYear();
+                const budgetEUR = b.currency === "THB" ? b.budget / settings.exchangeRate : b.budget;
+                const spent = transactions.filter(t => {
+                  const d = new Date(t.date);
+                  return t.category === b.category && t.amount < 0 && d.getMonth()===nowM && d.getFullYear()===nowY;
+                }).reduce((s,t) => s + Math.abs(t.amount), 0);
+                const pct = Math.min(Math.round((spent/budgetEUR)*100), 100);
+                const remaining = budgetEUR - spent;
+                const isOver = spent > budgetEUR;
+                const barColor = isOver ? "#ef4444" : pct >= 80 ? "#f59e0b" : "#22c55e";
+                return (
+                  <div key={b.id} style={{marginBottom:12}}>
+                    <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:3}}>
+                      <span style={{fontSize:12, color:"#cbd5e1"}}>{b.icon} {b.category}</span>
+                      <div style={{display:"flex", gap:6, alignItems:"center"}}>
+                        <span style={{fontSize:11, fontFamily:"'Space Mono',monospace", color: isOver?"#f87171": remaining < budgetEUR*0.2 ? "#fbbf24":"#4ade80"}}>
+                          {isOver ? `เกิน ${fmt(Math.abs(remaining))}` : `เหลือ ${fmt(remaining)}`}
+                        </span>
+                        <button onClick={()=>saveBudgets(budgets.filter(x=>x.id!==b.id))} style={{background:"none",border:"none",color:"#374151",cursor:"pointer",fontSize:12,padding:"0 2px"}}>✕</button>
+                      </div>
+                    </div>
+                    <div style={{background:"#1e2535", borderRadius:4, height:6, overflow:"hidden"}}>
+                      <div style={{height:"100%", width:`${pct}%`, background: barColor, borderRadius:4, transition:"width 0.3s"}}/>
+                    </div>
+                    <div style={{fontSize:9, color:"#374151", marginTop:2}}>
+                      {fmt(spent)} / {b.currency==="THB"?`฿${b.budget}→`:""}{fmt(budgetEUR)} ({pct}%)
+                    </div>
+                  </div>
+                );
+              })}
+              {budgets.length === 0 && <div style={{fontSize:12,color:"#374151",textAlign:"center",padding:"8px 0"}}>ยังไม่มีงบ กด "+ เพิ่มงบ" เพื่อเริ่มต้น</div>}
+            </div>
+
             <div style={S.card}>
               <span style={S.label}>✏️ บันทึกรายการ</span>
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -1215,6 +1362,36 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
         </div>
       )}
 
+      {/* Add Budget Modal */}
+      {showAddBudget&&(
+        <div className="modal-bg" onClick={e=>e.target===e.currentTarget&&setShowAddBudget(false)}>
+          <div className="modal">
+            <div style={{fontSize:17,fontWeight:700,marginBottom:16,color:"#e2e8f0"}}>➕ เพิ่มงบหมวดหมู่</div>
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <select className="inp-focus" style={S.inp} value={newBudget.category} onChange={e=>setNewBudget({...newBudget,category:e.target.value})}>
+                <option value="" style={{background:"#1a1e2a"}}>-- เลือกหมวด --</option>
+                {categories.filter(c=>c!=="รายรับ").map(c=><option key={c} style={{background:"#1a1e2a"}}>{c}</option>)}
+              </select>
+              <select className="inp-focus" style={S.inp} value={newBudget.currency} onChange={e=>setNewBudget({...newBudget,currency:e.target.value})}>
+                <option value="EUR" style={{background:"#1a1e2a"}}>EUR (ยูโร)</option>
+                <option value="THB" style={{background:"#1a1e2a"}}>THB (บาท)</option>
+              </select>
+              <input className="inp-focus" style={S.inp} type="number" placeholder={`งบ/เดือน (${newBudget.currency})`} value={newBudget.budget} onChange={e=>setNewBudget({...newBudget,budget:e.target.value})}/>
+              <input className="inp-focus" style={S.inp} placeholder="Emoji icon (เช่น 🛒)" value={newBudget.icon} onChange={e=>setNewBudget({...newBudget,icon:e.target.value})}/>
+              <button style={S.btn} onClick={()=>{
+                if(!newBudget.category||!newBudget.budget) return;
+                const b={...newBudget, id:"b_"+Date.now(), budget:parseFloat(newBudget.budget)};
+                saveBudgets([...budgets, b]);
+                setShowAddBudget(false);
+                setNewBudget({category:"",budget:"",currency:"EUR",icon:"💰"});
+                toast(`✅ เพิ่มงบ "${b.category}" แล้ว`);
+              }}>💾 เพิ่มงบ</button>
+            </div>
+            <button onClick={()=>setShowAddBudget(false)} style={{width:"100%",marginTop:8,background:"none",border:"none",color:"#475569",fontSize:13,cursor:"pointer",fontFamily:"inherit",padding:8}}>ยกเลิก</button>
+          </div>
+        </div>
+      )}
+
       {/* Edit Transaction */}
       {editingTx&&(
         <div className="modal-bg" onClick={e=>e.target===e.currentTarget&&setEditingTx(null)}>
@@ -1245,4 +1422,4 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
       </div>
     </div>
   );
-            }
+  }
