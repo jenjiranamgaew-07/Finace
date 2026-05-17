@@ -122,9 +122,22 @@ function lsSave(data) {
   try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch(e) { console.warn("localStorage save failed", e); }
 }
 
+// Remove undefined values recursively (Firestore does not accept undefined)
+function cleanForFirestore(obj) {
+  if (Array.isArray(obj)) return obj.map(cleanForFirestore);
+  if (obj !== null && typeof obj === "object") {
+    return Object.fromEntries(
+      Object.entries(obj)
+        .filter(([, v]) => v !== undefined)
+        .map(([k, v]) => [k, cleanForFirestore(v)])
+    );
+  }
+  return obj;
+}
+
 async function fbSave(data) {
   if (!db) throw new Error("Firebase not initialized");
-  await setDoc(doc(db, "finance", "user_data"), data);
+  await setDoc(doc(db, "finance", "user_data"), cleanForFirestore(data));
 }
 
 // ===== AI ANALYSIS =====
@@ -1232,4 +1245,4 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
       </div>
     </div>
   );
-    }
+            }
