@@ -928,18 +928,23 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
       {/* Month Detail MODAL - rendered as overlay */}
       {monthDetail && (()=>{
                 const mi = monthDetail.monthIndex; // 0-based month (4=May)
-                const proj = projection[mi-4];
-                const actualM = actualProjection[mi-4];
+                const idx = mi - 4; // index into projection array (0=May)
+                if (idx < 0 || idx >= projection.length) return null;
+                const proj = projection[idx];
+                const actualM = actualProjection[idx];
+                if (!proj) return null;
                 // ใช้ข้อมูลที่ projection คำนวณไว้แล้ว (rolling จากจำนวนงวดจริง)
-                const activeDebt = proj?.activeDebts || [];
-                const debtTotal = proj?.debtTotal || 0;
-                const fixedExp = proj?.fixedExp || expenses.reduce((s,e)=>s+e.amount,0);
+                const activeDebt = proj.activeDebts || [];
+                const debtTotal = proj.debtTotal || 0;
+                const fixedExp = proj.fixedExp || expenses.reduce((s,e)=>s+e.amount,0);
                 // Actual txns
                 const monthTxns = transactions.filter(t=>{const d=new Date(t.date);return d.getFullYear()===2026&&d.getMonth()===mi;});
                 const actualInc = actualM?.income ?? monthTxns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
                 const actualExp = actualM?.expense ?? monthTxns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
                 const hasActual = actualM?.hasData || monthTxns.length > 0;
                 return (
+                  <>
+                  <div onClick={()=>setMonthDetail(null)} style={{position:"fixed",inset:0,zIndex:998,background:"#000000aa"}}/>
                   <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:999,background:"#0d1117",border:"2px solid #2563eb",borderTopLeftRadius:20,borderTopRightRadius:20,padding:"20px 16px",boxShadow:"0 -8px 32px #000c",maxHeight:"80vh",overflowY:"auto"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                       <span style={{fontSize:13,fontWeight:700,color:"#e2e8f0"}}>📋 {monthDetail.label} 2026</span>
@@ -1010,6 +1015,8 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
                       <div style={{textAlign:"center",fontSize:11,color:"#374151",padding:"6px 0"}}>ยังไม่มีรายการบันทึกเดือนนี้</div>
                     )}
                   </div>
+                  </div>
+                  </>
                 );
       })()}
 
@@ -1570,7 +1577,6 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
               }}>💾 เพิ่มงบ</button>
             </div>
             <button onClick={()=>setShowAddBudget(false)} style={{width:"100%",marginTop:8,background:"none",border:"none",color:"#475569",fontSize:13,cursor:"pointer",fontFamily:"inherit",padding:8}}>ยกเลิก</button>
-                  
           </div>
         </div>
       )}
@@ -1605,4 +1611,4 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
       </div>
     </div>
   );
-    }
+        }
