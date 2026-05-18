@@ -1602,6 +1602,10 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
         </div>
       )}
 
+      </div>
+      </div>
+      </div>
+
       {/* BOTTOM NAV */}
       <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"#080a10",borderTop:"1px solid #111827",display:"flex",padding:"8px 0 10px"}}>
         {[{id:"dashboard",i:"📊",l:"ภาพรวม"},{id:"debts",i:"💳",l:"หนี้สิน"},{id:"add",i:"✏️",l:"บันทึก"},{id:"history",i:"📋",l:"ประวัติ"},{id:"report",i:"📄",l:"Report"}].map(t=>(
@@ -1613,4 +1617,4 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
       </div>
     </div>
   );
-                                                       }
+                  }
