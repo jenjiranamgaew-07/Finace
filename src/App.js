@@ -134,7 +134,6 @@ function lsSave(data) {
   try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch(e) { console.warn("localStorage save failed", e); }
 }
 
-// Remove undefined values recursively (Firestore does not accept undefined)
 function cleanForFirestore(obj) {
   if (Array.isArray(obj)) return obj.map(cleanForFirestore);
   if (obj !== null && typeof obj === "object") {
@@ -174,10 +173,9 @@ function calcFinancialScore(debts, expenses, transactions, settings) {
   const monthlyFixed = expenses.reduce((s,e)=>s+e.amount,0);
   const total = monthlyDebt + monthlyFixed;
   const income = settings.monthlyIncome;
-  const debtRatio = total / income; // lower = better
+  const debtRatio = total / income;
   const balance = income - total;
   
-  // Score components (0-100 each)
   const debtScore = Math.max(0, Math.min(100, (1 - debtRatio) * 100));
   const savingsScore = balance > 0 ? Math.min(100, (balance / income) * 200) : 0;
   const debtCount = debts.filter(d=>d.remaining>0).length;
@@ -208,24 +206,21 @@ export default function App() {
   const [newBudget, setNewBudget] = useState({category:"", budget:"", currency:"EUR", icon:"💰"});
   const [budgetAlert, setBudgetAlert] = useState(null);
 
-  const [monthDetail, setMonthDetail] = useState(null); // {monthIndex, label}
+  const [monthDetail, setMonthDetail] = useState(null);
 
   const [activeTab, setActiveTab] = useState("dashboard");
   const [notif, setNotif] = useState(null);
 
-  // Modals
   const [showAddDebt, setShowAddDebt] = useState(false);
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
   const [showAddCat, setShowAddCat] = useState(false);
   const [editingTx, setEditingTx] = useState(null);
 
-  // Transfer
   const [transferAmt, setTransferAmt] = useState("");
   const [transferDate, setTransferDate] = useState(today());
   const [transferSplit, setTransferSplit] = useState(null);
 
-  // Quick entry
   const [qName, setQName] = useState("");
   const [qAmt, setQAmt] = useState("");
   const [qCat, setQCat] = useState("ค่ากับข้าว/ของใช้");
@@ -234,30 +229,24 @@ export default function App() {
   const [qIsThb, setQIsThb] = useState(false);
   const [newCat, setNewCat] = useState("");
 
-  // New debt/expense forms
   const [newDebt, setNewDebt] = useState({name:"",amount:"",currency:"EUR",totalInstallments:"",remaining:"",category:"eur",icon:"💳",amountTHB:"",isRolling:false});
   const [newExpense, setNewExpense] = useState({name:"",amount:"",amountTHB:"",isTHB:false,icon:"💰"});
 
-  // History filters
   const [histSearch, setHistSearch] = useState("");
   const [histMonth, setHistMonth] = useState("");
   const [histYear, setHistYear] = useState("");
   const [histPage, setHistPage] = useState(1);
   const PAGE_SIZE = 15;
 
-  // Report
   const [reportMonth, setReportMonth] = useState(new Date().getMonth());
   const [reportYear, setReportYear] = useState(2026);
 
-  // AI
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState(null);
   const [aiTab, setAiTab] = useState("summary");
 
-  // Budget warning threshold
   const [showBudgetWarning, setShowBudgetWarning] = useState(false);
 
-  // Load: Firebase one-time load + localStorage fallback
   useEffect(() => {
     (async () => {
       if (db) {
@@ -324,7 +313,6 @@ export default function App() {
     setSyncing(false);
   };
 
-  // ใช้ functional update + saveAll โดยตรงเพื่อป้องกัน stale closure
   const saveDebts = (d) => { setDebtsState(d); saveAll(d, expenses, transactions, settings, categories); };
   const saveExpenses = (e) => { setExpensesState(e); saveAll(debts, e, transactions, settings, categories); };
   const saveTxns = (t) => { setTxnsState(t); saveAll(debts, expenses, t, settings, categories); };
@@ -335,7 +323,6 @@ export default function App() {
   const saveCats = (c) => { setCategoriesState(c); saveAll(debts, expenses, transactions, settings, c, budgets); };
   const saveBudgets = (b) => { setBudgetsState(b); saveAll(debts, expenses, transactions, settings, categories, b); };
 
-  // Stats
   const monthlyDebt = useMemo(() => debts.reduce((s,d)=>s+d.amount,0), [debts]);
   const monthlyFixed = useMemo(() => expenses.reduce((s,e)=>s+e.amount,0), [expenses]);
   const totalMonthly = monthlyDebt + monthlyFixed;
@@ -346,35 +333,27 @@ export default function App() {
 
   const financialScore = useMemo(() => calcFinancialScore(debts, expenses, transactions, settings), [debts, expenses, transactions, settings]);
 
-  // Budget warning
   useEffect(() => {
     if (balance < (settings.budgetWarning || 200) && balance >= 0) setShowBudgetWarning(true);
     else if (balance < 0) setShowBudgetWarning(true);
     else setShowBudgetWarning(false);
   }, [balance, settings.budgetWarning]);
 
-  // Current month spending
   const nowMonth = new Date().getMonth();
   const nowYear = new Date().getFullYear();
   const thisMonthTxns = transactions.filter(t => { const d = new Date(t.date); return d.getMonth()===nowMonth && d.getFullYear()===nowYear; });
   const thisMonthSpent = thisMonthTxns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
   const thisMonthIncome = thisMonthTxns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
 
-  // Forecast: days until balance hits 0
   const dailyBurn = thisMonthSpent / new Date().getDate();
   const daysLeft = balance / dailyBurn;
   const forecastDate = new Date(); forecastDate.setDate(forecastDate.getDate() + Math.round(daysLeft));
 
-  // Smart rolling projection:
-  // - เดือนที่มีบันทึกจริง → ใช้ยอดจริง + หักงวดที่จ่ายแล้ว
-  // - เดือนอนาคต → ประมาณการจาก remaining จริง (optimistic: จ่ายทุกงวด)
-  // - carry ทบสะสมทุกเดือน
   const { projection, actualProjection } = useMemo(() => {
     const fixedExp = expenses.reduce((s,e)=>s+e.amount,0);
     const nowM = new Date().getMonth();
     const nowY = new Date().getFullYear();
 
-    // Start from real remaining (debts already reflect payments made so far)
     let simRemaining = {};
     debts.forEach(d => { simRemaining[d.id] = d.remaining; });
 
@@ -390,21 +369,17 @@ export default function App() {
       const hasTxns = monthTxns.length > 0;
       const isFuture = nowY === 2026 ? m > nowM : nowY < 2026;
 
-      // Debts still active this simulated month
       const activeDebts = debts.filter(d => simRemaining[d.id] > 0);
       const debtTotal = activeDebts.reduce((s,d) => s + d.amount, 0);
       const bal = settings.monthlyIncome - debtTotal - fixedExp;
 
-      // Theory carry ทบตาม bal เสมอ (ไม่ขึ้นกับยอดจริง)
       carry += bal;
 
-      // Actual tracking แยกต่างหาก
       const net = monthTxns.reduce((s,t) => s + t.amount, 0);
       const actualInc = monthTxns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
       const actualExp = monthTxns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
 
       if (hasTxns) {
-        // หักเฉพาะหนี้ที่มีบันทึกจ่ายจริงเดือนนี้
         debts.forEach(d => {
           const paid = monthTxns.some(t => {
             const cat = t.category?.trim().toLowerCase();
@@ -416,7 +391,6 @@ export default function App() {
         actual.push({ month: MONTHS[m], net, cumulative: null, income: actualInc, expense: actualExp, hasData: true });
       } else {
         actual.push({ month: MONTHS[m], net: null, cumulative: null, hasData: false });
-        // อนาคต → สมมติจ่ายทุกงวด (optimistic)
         if (isFuture) {
           debts.forEach(d => { if (simRemaining[d.id] > 0) simRemaining[d.id]--; });
         }
@@ -434,52 +408,35 @@ export default function App() {
     1
   );
 
-  // ===== AUTO REDUCE INSTALLMENTS =====
-  // จับคู่อัตโนมัติ: หมวดที่บันทึก ต้องตรงกับชื่อหนี้ หรือ id หรือ hardcode map
   const addTxnAndReduceDebt = (tx) => {
     const newTxns = [tx, ...transactions];
     let newDebts = [...debts];
 
     if (tx.amount < 0) {
       const catKey = tx.category;
-
-      // 1. ลองหาจาก DEBT_CATEGORY_MAP ก่อน (รายการเดิม)
       const mappedId = DEBT_CATEGORY_MAP[catKey] || null;
-
       const findDebt = (id) => debts.find(d => d.id === id);
-
       let matchedDebt = null;
 
-      // Priority 1: hardcode map
       if (mappedId) {
         matchedDebt = findDebt(mappedId);
       }
 
       if (!matchedDebt) {
         const cat = catKey.trim().toLowerCase();
-
-        // Priority 2: exact name match (case-insensitive)
         matchedDebt = debts.find(d => d.name.trim().toLowerCase() === cat);
-
-        // Priority 3: exact id match
         if (!matchedDebt) {
           matchedDebt = debts.find(d => d.id.toLowerCase() === cat);
         }
-
-        // Priority 4: category fully contains debt name (longer match wins)
-        // e.g. "saldoje2" won't match debt "saldoje" if "saldoje2" debt exists
         if (!matchedDebt) {
           const candidates = debts.filter(d => {
             const name = d.name.trim().toLowerCase();
             return cat === name || cat.startsWith(name + " ") || cat.startsWith(name + "2") === false && cat.includes(name);
           });
-          // pick the longest name match (most specific)
           if (candidates.length > 0) {
             matchedDebt = candidates.sort((a,b) => b.name.length - a.name.length)[0];
           }
         }
-
-        // Priority 5: debt name contains category (last resort, longest wins)
         if (!matchedDebt) {
           const candidates = debts.filter(d => d.name.trim().toLowerCase().includes(cat));
           if (candidates.length > 0) {
@@ -494,7 +451,6 @@ export default function App() {
             ? {...d, remaining: d.remaining - 1}
             : d
         );
-        // Show toast indicating debt was reduced
         setTimeout(() => toast(`📉 ${matchedDebt.name} เหลือ ${matchedDebt.remaining - 1} งวด`), 400);
       }
     }
@@ -504,7 +460,6 @@ export default function App() {
     saveAll(newDebts, expenses, newTxns, settings, categories);
   };
 
-  // Transfer
   const handleThaiTransfer = () => {
     const total = parseFloat(transferAmt); if(!total||total<=0) return;
     const thaiDebts = debts.filter(d=>d.category==="thai"&&d.remaining>0);
@@ -518,7 +473,6 @@ export default function App() {
     const txs = transferSplit.split.map(d=>({id:uid(),date:transferDate,name:`จ่ายหนี้ ${d.name}`,category:"หนี้ไทย",amount:-d.paidEUR,method:"Debit"}));
     if(transferSplit.remaining>0) txs.push({id:uid(),date:transferDate,name:"ส่งให้แม่",category:"ให้แม่",amount:-(transferSplit.remaining/settings.exchangeRate),method:"Debit"});
     
-    // Reduce remaining for thai debts
     const newDebts = debts.map(d => {
       const hit = transferSplit.split.find(s=>s.id===d.id);
       if (hit && d.remaining > 0) return {...d, remaining: d.remaining - 1};
@@ -532,7 +486,6 @@ export default function App() {
     toast(`✅ บันทึกโอน ${fmtTHB(parseFloat(transferAmt))} แล้ว — งวดลดแล้ว!`);
   };
 
-  // Quick entry
   const addQuickEntry = () => {
     if(!qAmt||!qName) return;
     const isInc = qCat==="รายรับ";
@@ -541,7 +494,6 @@ export default function App() {
     const tx = {id:uid(),date:qDate,name:qName,category:qCat,amount:isInc?amtEUR:-amtEUR,method:qMethod};
     addTxnAndReduceDebt(tx);
 
-    // Check budget for this category
     if (tx.amount < 0) {
       const matchBudget = budgets.find(b => b.category === qCat);
       if (matchBudget) {
@@ -564,7 +516,6 @@ export default function App() {
     setQName(""); setQAmt(""); toast(`✅ บันทึก "${qName}" แล้ว`);
   };
 
-  // Edit transaction
   const saveEditTx = () => {
     if(!editingTx) return;
     const newTxns = transactions.map(t=>t.id===editingTx.id?editingTx:t);
@@ -608,7 +559,6 @@ export default function App() {
     toast("🗑️ ลบหนี้แล้ว","#f59e0b");
   };
 
-  // Expense ops
   const updateExpense = (id,field,value) => {
     const updated = expenses.map(e=>{
       if(e.id!==id) return e;
@@ -637,7 +587,6 @@ export default function App() {
     toast("🗑️ ลบแล้ว","#f59e0b");
   };
 
-  // Category ops
   const addCategory = () => {
     if(!newCat.trim()) return;
     const newCats = [...categories, newCat.trim()];
@@ -646,7 +595,6 @@ export default function App() {
     setNewCat(""); setShowAddCat(false); toast(`✅ เพิ่มหมวด "${newCat}" แล้ว`);
   };
 
-  // Filtered history
   const filteredTxns = useMemo(() => {
     return transactions.filter(t => {
       const d = new Date(t.date);
@@ -660,7 +608,6 @@ export default function App() {
   const totalPages = Math.ceil(filteredTxns.length / PAGE_SIZE);
   const pagedTxns = filteredTxns.slice((histPage-1)*PAGE_SIZE, histPage*PAGE_SIZE);
 
-  // Report data
   const reportTxns = transactions.filter(t=>{const d=new Date(t.date);return d.getMonth()===reportMonth&&d.getFullYear()===reportYear;});
   const reportInc = reportTxns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
   const reportExp = reportTxns.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0);
@@ -686,7 +633,6 @@ export default function App() {
   }
   const monthlyBals = calcMonthlyBalances(transactions, reportYear);
 
-  // AI Analysis
   const runAI = async (type) => {
     setAiLoading(true); setAiResult(null); setAiTab(type);
     try {
@@ -734,7 +680,6 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
     setAiLoading(false);
   };
 
-  // Styles
   const S = {
     card: {background:"#161921",border:"1px solid #252a3a",borderRadius:16,padding:16,marginBottom:12},
     cardSm: {background:"#1a1e2a",border:"1px solid #2a3045",borderRadius:12,padding:12},
@@ -782,11 +727,9 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
         .hist-row:hover{background:#0f1219;}
       `}</style>
 
-      {/* Sync bar */}
       {syncing && <div style={{position:"fixed",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,#3b82f6,#06b6d4,#3b82f6)",backgroundSize:"200%",zIndex:999,animation:"pulse 1s linear infinite"}}/>}
       {notif && <div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",background:notif.color,color:"white",padding:"10px 20px",borderRadius:12,fontWeight:600,fontSize:13,zIndex:999,boxShadow:"0 8px 24px rgba(0,0,0,0.5)",whiteSpace:"nowrap",animation:"slideUp 0.3s ease"}}>{notif.msg}</div>}
 
-      {/* Budget Warning Banner */}
       {showBudgetWarning && (
         <div style={{background:balance<0?"#3f0f0f":"#2d1f00",borderBottom:`1px solid ${balance<0?"#7f1d1d":"#78350f"}`,padding:"10px 20px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <span style={{fontSize:12,color:balance<0?"#fca5a5":"#fde68a",fontWeight:600}}>
@@ -812,7 +755,6 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
           </div>
         </div>
 
-        {/* Hero */}
         <div style={{background:"linear-gradient(135deg,#0f2041,#1565c0,#0288d1)",borderRadius:20,padding:20,marginBottom:12,boxShadow:"0 8px 32px rgba(37,99,235,0.2)",position:"relative",overflow:"hidden"}}>
           <div style={{position:"absolute",top:-30,right:-30,width:120,height:120,background:"rgba(255,255,255,0.04)",borderRadius:"50%"}}/>
           <div style={{position:"absolute",bottom:-20,left:-10,width:80,height:80,background:"rgba(255,255,255,0.03)",borderRadius:"50%"}}/>
@@ -825,7 +767,6 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
           </div>
         </div>
 
-        {/* Stats */}
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
           {[
             {l:"หนี้ทั้งหมด",v:fmt(totalDebtEUR),c:"#f87171",i:"💸"},
@@ -853,7 +794,6 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
         {/* ===== DASHBOARD ===== */}
         {activeTab==="dashboard" && (
           <div>
-            {/* Forecast card */}
             <div style={{...S.card,background:"#0f1827",borderColor:"#1e3a5f"}}>
               <span style={S.label}>🔮 Forecast & Snapshot</span>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
@@ -874,10 +814,8 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
               </div>
             </div>
 
-            {/* Projection Chart */}
             <div style={S.card}>
               <span style={S.label}>📈 ยอดสะสม พ.ค.–ธ.ค. 2026</span>
-              {/* Legend */}
               <div style={{display:"flex",gap:12,marginBottom:8,fontSize:10}}>
                 <span style={{display:"flex",alignItems:"center",gap:4,color:"#4ade80"}}><span style={{width:10,height:10,borderRadius:2,background:"#22c55e",display:"inline-block"}}/> ทฤษฎี</span>
                 <span style={{display:"flex",alignItems:"center",gap:4,color:"#60a5fa"}}><span style={{width:10,height:10,borderRadius:2,background:"#3b82f6",display:"inline-block"}}/> จริง (บันทึก)</span>
@@ -892,16 +830,13 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
                   return (
                     <div key={i} onClick={()=>setMonthDetail(monthDetail?.monthIndex===i+4?null:{monthIndex:i+4,label:s.month})}
                       style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,cursor:"pointer",borderRadius:6,padding:"2px 0",background:isSelected?"#1e2535":"transparent",transition:"background 0.2s"}}>
-                      {/* actual label */}
                       {actual.cumulative !== null && (
                         <div style={{fontSize:7,color:actual.cumulative>=0?"#60a5fa":"#f87171",fontFamily:"'Space Mono',monospace",textAlign:"center",lineHeight:1,marginBottom:1}}>
                           {actual.cumulative>=0?"+":""}{Math.round(actual.cumulative)}
                         </div>
                       )}
                       <div style={{width:"100%",display:"flex",gap:2,alignItems:"flex-end",height:68}}>
-                        {/* Theory bar */}
                         <div style={{flex:1,height:hT,background:s.cumulative>=0?"linear-gradient(180deg,#22c55e88,#16a34a)":"linear-gradient(180deg,#ef444488,#dc2626)",borderRadius:"4px 4px 0 0",border:`1px solid ${s.cumulative>=0?(isSelected?"#22c55e":"#22c55e44"):(isSelected?"#ef4444":"#ef444444")}`}}/>
-                        {/* Actual bar */}
                         {actual.cumulative !== null
                           ? <div style={{flex:1,height:hA,background:actual.cumulative>=0?"linear-gradient(180deg,#3b82f688,#1d4ed8)":"linear-gradient(180deg,#f8717188,#dc2626)",borderRadius:"4px 4px 0 0",border:`1px solid ${aColor}44`}}/>
                           : <div style={{flex:1,height:4,background:"#1e293b",borderRadius:"4px 4px 0 0",opacity:0.3}}/>
@@ -922,13 +857,8 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
                   {(()=>{const last=actualProjection.filter(s=>s.hasData).slice(-1)[0]; return last?<span style={{color:(last.income-last.expense)>=0?"#60a5fa":"#f87171",fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{(last.income-last.expense)>=0?"+":""}{fmt(last.income-last.expense)}</span>:<span style={{color:"#475569",fontSize:10}}>ยังไม่มีข้อมูล</span>;})()}
                 </div>
               </div>
-
             </div>
 
-
-
-
-            {/* Timeline */}
             <div style={S.card}>
               <span style={S.label}>🗓️ Timeline หมดหนี้</span>
               {debts.filter(d=>!d.isRolling&&d.remaining>0).sort((a,b)=>a.remaining-b.remaining).slice(0,6).map(d=>{
@@ -947,7 +877,6 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
               })}
             </div>
 
-            {/* Financial score */}
             <div style={{...S.card,background:"#0d1520",borderColor:"#1e3a5f"}}>
               <span style={S.label}>🏆 Financial Health Score</span>
               <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:12}}>
@@ -966,7 +895,6 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
               <button style={{...S.btn,background:"#1e3a5f",fontSize:12,padding:"8px"}} onClick={()=>{ setActiveTab("ai"); runAI("score"); }}>🤖 วิเคราะห์ละเอียดด้วย AI →</button>
             </div>
 
-            {/* Settings */}
             <div style={S.card}>
               <span style={S.label}>⚙️ ตั้งค่า</span>
               {[
@@ -983,7 +911,6 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
           </div>
         )}
 
-        {/* ===== AI TAB ===== */}
         {/* ===== DEBTS ===== */}
         {activeTab==="debts" && (
           <div>
@@ -1093,8 +1020,6 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
         {/* ===== ADD ===== */}
         {activeTab==="add" && (
           <div>
-
-            {/* Budget Alert */}
             {budgetAlert && (
               <div style={{background: budgetAlert.over ? "#3b0000" : "#3b2000", border:`1px solid ${budgetAlert.over?"#ef4444":"#f59e0b"}`, borderRadius:12, padding:"12px 14px", marginBottom:12, display:"flex", justifyContent:"space-between", alignItems:"flex-start"}}>
                 <div>
@@ -1109,7 +1034,6 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
               </div>
             )}
 
-            {/* Budget Tracker */}
             <div style={S.card}>
               <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10}}>
                 <span style={S.label}>📊 งบรายเดือนนี้</span>
@@ -1202,7 +1126,6 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
               <button style={{...S.btn,marginTop:12,background:"#92400e",color:"#fde68a"}} onClick={()=>{
                 const t=today();
                 const newTxns = [{id:uid(),date:t,name:"เงินเดือน Greenfood",category:"รายรับ",amount:settings.monthlyIncome,method:"Income"},{id:uid(),date:t,name:"หนี้บ้านไทย ABN",category:"หนี้บ้านไทย ABN",amount:-260,method:"Debit"},{id:uid(),date:t,name:"ประกันสุขภาพ VGZ",category:"ประกัน",amount:-149.9,method:"Debit"},...transactions];
-                // Reduce ABN home debt
                 const newDebts = debts.map(d => d.id==="abn_home" && d.remaining>0 ? {...d,remaining:d.remaining-1} : d);
                 setTxnsState(newTxns); setDebtsState(newDebts);
                 saveAll(newDebts, expenses, newTxns, settings, categories);
@@ -1216,7 +1139,6 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
         {/* ===== HISTORY ===== */}
         {activeTab==="history" && (
           <div>
-            {/* Search & Filter */}
             <div style={{...S.card,padding:"12px 14px",marginBottom:12}}>
               <input className="inp-focus" style={{...S.inp,marginBottom:8}} placeholder="🔍 ค้นหาชื่อ หรือ หมวดหมู่..." value={histSearch} onChange={e=>{setHistSearch(e.target.value);setHistPage(1);}}/>
               <div style={{display:"flex",gap:6}}>
@@ -1254,7 +1176,6 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
               </div>
             ))}
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <div style={{display:"flex",justifyContent:"center",gap:6,marginTop:16,flexWrap:"wrap"}}>
                 <button style={S.btnSm} onClick={()=>setHistPage(p=>Math.max(1,p-1))} disabled={histPage===1}>◀</button>
@@ -1346,10 +1267,7 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
             </div>
           </div>
         )}
-      </div>
 
-      </div>
-      </div>
       </div>
 
       {/* ===== MODALS ===== */}
@@ -1368,7 +1286,6 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
               <input className="inp-focus" style={S.inp} type="number" placeholder="ยอดโอน (บาท)" value={transferAmt} onChange={e=>setTransferAmt(e.target.value)}/>
               <button style={{...S.btnSm,whiteSpace:"nowrap"}} onClick={handleThaiTransfer}>คำนวณ</button>
             </div>
-            {/* Quick THB amounts */}
             <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
               {[20000,25000,30000].map(v=>(
                 <button key={v} style={{...S.btnSm,fontSize:11}} onClick={()=>setTransferAmt(v.toString())}>฿{v.toLocaleString()}</button>
@@ -1462,8 +1379,7 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
         </div>
       )}
 
-
-{/* Month Detail MODAL */}
+      {/* Month Detail MODAL */}
       {monthDetail && (
         <div onClick={()=>setMonthDetail(null)} style={{position:"fixed",inset:0,zIndex:998,background:"#000000bb"}}>
           <div onClick={e=>e.stopPropagation()} style={{position:"fixed",bottom:0,left:0,right:0,zIndex:999,background:"#0d1117",border:"2px solid #2563eb",borderTopLeftRadius:20,borderTopRightRadius:20,padding:"20px 16px",maxHeight:"80vh",overflowY:"auto"}}>
