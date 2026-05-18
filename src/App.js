@@ -925,100 +925,7 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
 
             </div>
 
-      {/* Month Detail MODAL - rendered as overlay */}
-      {monthDetail && (()=>{
-                const mi = monthDetail.monthIndex; // 0-based month (4=May)
-                const idx = mi - 4; // index into projection array (0=May)
-                if (idx < 0 || idx >= projection.length) return null;
-                const proj = projection[idx];
-                const actualM = actualProjection[idx];
-                if (!proj) return null;
-                // ใช้ข้อมูลที่ projection คำนวณไว้แล้ว (rolling จากจำนวนงวดจริง)
-                const activeDebt = proj.activeDebts || [];
-                const debtTotal = proj.debtTotal || 0;
-                const fixedExp = proj.fixedExp || expenses.reduce((s,e)=>s+e.amount,0);
-                // Actual txns
-                const monthTxns = transactions.filter(t=>{const d=new Date(t.date);return d.getFullYear()===2026&&d.getMonth()===mi;});
-                const actualInc = actualM?.income ?? monthTxns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-                const actualExp = actualM?.expense ?? monthTxns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
-                const hasActual = actualM?.hasData || monthTxns.length > 0;
-                return (
-                  <>
-                  <div onClick={()=>setMonthDetail(null)} style={{position:"fixed",inset:0,zIndex:998,background:"#000000aa"}}/>
-                  <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:999,background:"#0d1117",border:"2px solid #2563eb",borderTopLeftRadius:20,borderTopRightRadius:20,padding:"20px 16px",boxShadow:"0 -8px 32px #000c",maxHeight:"80vh",overflowY:"auto"}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                      <span style={{fontSize:13,fontWeight:700,color:"#e2e8f0"}}>📋 {monthDetail.label} 2026</span>
-                      <button onClick={()=>setMonthDetail(null)} style={{background:"none",border:"none",color:"#475569",fontSize:15,cursor:"pointer"}}>✕</button>
-                    </div>
 
-                    {/* Theory section */}
-                    <div style={{fontSize:10,color:"#4ade80",fontWeight:700,marginBottom:6,letterSpacing:1}}>📐 ประมาณการ (ทฤษฎี)</div>
-                    <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:10}}>
-                      <div style={{display:"flex",justifyContent:"space-between",fontSize:12}}>
-                        <span style={{color:"#94a3b8"}}>💰 รายรับ</span>
-                        <span style={{color:"#4ade80",fontFamily:"'Space Mono',monospace"}}>+{fmt(settings.monthlyIncome)}</span>
-                      </div>
-                      <div style={{display:"flex",justifyContent:"space-between",fontSize:12}}>
-                        <span style={{color:"#94a3b8"}}>💸 หนี้ต้องจ่าย ({activeDebt.length} รายการ)</span>
-                        <span style={{color:"#f87171",fontFamily:"'Space Mono',monospace"}}>-{fmt(debtTotal)}</span>
-                      </div>
-                      {activeDebt.slice(0,4).map(d=>(
-                        <div key={d.id} style={{display:"flex",justifyContent:"space-between",fontSize:10,paddingLeft:12}}>
-                          <span style={{color:"#475569"}}>{d.icon} {d.name}</span>
-                          <span style={{color:"#f87171",fontFamily:"'Space Mono',monospace"}}>-{fmt(d.amount)}</span>
-                        </div>
-                      ))}
-                      {activeDebt.length>4&&<div style={{fontSize:9,color:"#374151",paddingLeft:12}}>+{activeDebt.length-4} รายการอื่น</div>}
-                      <div style={{display:"flex",justifyContent:"space-between",fontSize:12}}>
-                        <span style={{color:"#94a3b8"}}>🧾 ค่าใช้จ่ายประจำ</span>
-                        <span style={{color:"#fb923c",fontFamily:"'Space Mono',monospace"}}>-{fmt(fixedExp)}</span>
-                      </div>
-                      <div style={{height:1,background:"#1e2535",margin:"2px 0"}}/>
-                      <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:700}}>
-                        <span style={{color:"#e2e8f0"}}>คงเหลือเดือนนี้</span>
-                        <span style={{color:proj.balance>=0?"#4ade80":"#f87171",fontFamily:"'Space Mono',monospace"}}>{proj.balance>=0?"+":""}{fmt(proj.balance)}</span>
-                      </div>
-                      <div style={{display:"flex",justifyContent:"space-between",fontSize:11}}>
-                        <span style={{color:"#475569"}}>ยอดสะสม (ทบจากก่อนหน้า)</span>
-                        <span style={{color:proj.cumulative>=0?"#4ade80":"#f87171",fontFamily:"'Space Mono',monospace"}}>{proj.cumulative>=0?"+":""}{fmt(proj.cumulative)}</span>
-                      </div>
-                    </div>
-
-                    {/* Actual section */}
-                    {hasActual ? (
-                      <>
-                        <div style={{height:1,background:"#1e2535",marginBottom:8}}/>
-                        <div style={{fontSize:10,color:"#60a5fa",fontWeight:700,marginBottom:6,letterSpacing:1}}>📊 จริง (จากบันทึก)</div>
-                        <div style={{display:"flex",flexDirection:"column",gap:5}}>
-                          <div style={{display:"flex",justifyContent:"space-between",fontSize:12}}>
-                            <span style={{color:"#94a3b8"}}>💰 รายรับจริง</span>
-                            <span style={{color:"#4ade80",fontFamily:"'Space Mono',monospace"}}>+{fmt(actualInc)}</span>
-                          </div>
-                          <div style={{display:"flex",justifyContent:"space-between",fontSize:12}}>
-                            <span style={{color:"#94a3b8"}}>💸 รายจ่ายจริง</span>
-                            <span style={{color:"#f87171",fontFamily:"'Space Mono',monospace"}}>-{fmt(actualExp)}</span>
-                          </div>
-                          <div style={{height:1,background:"#1e2535",margin:"2px 0"}}/>
-                          <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:700}}>
-                            <span style={{color:"#e2e8f0"}}>คงเหลือจริง</span>
-                            <span style={{color:(actualInc-actualExp)>=0?"#60a5fa":"#f87171",fontFamily:"'Space Mono',monospace"}}>{(actualInc-actualExp)>=0?"+":""}{fmt(actualInc-actualExp)}</span>
-                          </div>
-                          {actual.cumulative!==null&&(
-                            <div style={{display:"flex",justifyContent:"space-between",fontSize:11}}>
-                              <span style={{color:"#475569"}}>สะสม (จริง)</span>
-                              <span style={{color:actual.cumulative>=0?"#60a5fa":"#f87171",fontFamily:"'Space Mono',monospace"}}>{actual.cumulative>=0?"+":""}{fmt(actual.cumulative)}</span>
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    ) : (
-                      <div style={{textAlign:"center",fontSize:11,color:"#374151",padding:"6px 0"}}>ยังไม่มีรายการบันทึกเดือนนี้</div>
-                    )}
-                  </div>
-                  </div>
-                  </>
-                );
-      })()}
 
 
             {/* Timeline */}
@@ -1551,6 +1458,101 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
         </div>
       )}
 
+{/* Month Detail MODAL - rendered as overlay */}
+      {monthDetail && (()=>{
+                const mi = monthDetail.monthIndex; // 0-based month (4=May)
+                const idx = mi - 4; // index into projection array (0=May)
+                if (idx < 0 || idx >= projection.length) return null;
+                const proj = projection[idx];
+                const actualM = actualProjection[idx];
+                if (!proj) return null;
+                // ใช้ข้อมูลที่ projection คำนวณไว้แล้ว (rolling จากจำนวนงวดจริง)
+                const activeDebt = proj.activeDebts || [];
+                const debtTotal = proj.debtTotal || 0;
+                const fixedExp = proj.fixedExp || expenses.reduce((s,e)=>s+e.amount,0);
+                // Actual txns
+                const monthTxns = transactions.filter(t=>{const d=new Date(t.date);return d.getFullYear()===2026&&d.getMonth()===mi;});
+                const actualInc = actualM?.income ?? monthTxns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+                const actualExp = actualM?.expense ?? monthTxns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
+                const hasActual = actualM?.hasData || monthTxns.length > 0;
+                return (
+                  <>
+                  <div onClick={()=>setMonthDetail(null)} style={{position:"fixed",inset:0,zIndex:998,background:"#000000aa"}}/>
+                  <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:999,background:"#0d1117",border:"2px solid #2563eb",borderTopLeftRadius:20,borderTopRightRadius:20,padding:"20px 16px",boxShadow:"0 -8px 32px #000c",maxHeight:"80vh",overflowY:"auto"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                      <span style={{fontSize:13,fontWeight:700,color:"#e2e8f0"}}>📋 {monthDetail.label} 2026</span>
+                      <button onClick={()=>setMonthDetail(null)} style={{background:"none",border:"none",color:"#475569",fontSize:15,cursor:"pointer"}}>✕</button>
+                    </div>
+
+                    {/* Theory section */}
+                    <div style={{fontSize:10,color:"#4ade80",fontWeight:700,marginBottom:6,letterSpacing:1}}>📐 ประมาณการ (ทฤษฎี)</div>
+                    <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:10}}>
+                      <div style={{display:"flex",justifyContent:"space-between",fontSize:12}}>
+                        <span style={{color:"#94a3b8"}}>💰 รายรับ</span>
+                        <span style={{color:"#4ade80",fontFamily:"'Space Mono',monospace"}}>+{fmt(settings.monthlyIncome)}</span>
+                      </div>
+                      <div style={{display:"flex",justifyContent:"space-between",fontSize:12}}>
+                        <span style={{color:"#94a3b8"}}>💸 หนี้ต้องจ่าย ({activeDebt.length} รายการ)</span>
+                        <span style={{color:"#f87171",fontFamily:"'Space Mono',monospace"}}>-{fmt(debtTotal)}</span>
+                      </div>
+                      {activeDebt.slice(0,4).map(d=>(
+                        <div key={d.id} style={{display:"flex",justifyContent:"space-between",fontSize:10,paddingLeft:12}}>
+                          <span style={{color:"#475569"}}>{d.icon} {d.name}</span>
+                          <span style={{color:"#f87171",fontFamily:"'Space Mono',monospace"}}>-{fmt(d.amount)}</span>
+                        </div>
+                      ))}
+                      {activeDebt.length>4&&<div style={{fontSize:9,color:"#374151",paddingLeft:12}}>+{activeDebt.length-4} รายการอื่น</div>}
+                      <div style={{display:"flex",justifyContent:"space-between",fontSize:12}}>
+                        <span style={{color:"#94a3b8"}}>🧾 ค่าใช้จ่ายประจำ</span>
+                        <span style={{color:"#fb923c",fontFamily:"'Space Mono',monospace"}}>-{fmt(fixedExp)}</span>
+                      </div>
+                      <div style={{height:1,background:"#1e2535",margin:"2px 0"}}/>
+                      <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:700}}>
+                        <span style={{color:"#e2e8f0"}}>คงเหลือเดือนนี้</span>
+                        <span style={{color:proj.balance>=0?"#4ade80":"#f87171",fontFamily:"'Space Mono',monospace"}}>{proj.balance>=0?"+":""}{fmt(proj.balance)}</span>
+                      </div>
+                      <div style={{display:"flex",justifyContent:"space-between",fontSize:11}}>
+                        <span style={{color:"#475569"}}>ยอดสะสม (ทบจากก่อนหน้า)</span>
+                        <span style={{color:proj.cumulative>=0?"#4ade80":"#f87171",fontFamily:"'Space Mono',monospace"}}>{proj.cumulative>=0?"+":""}{fmt(proj.cumulative)}</span>
+                      </div>
+                    </div>
+
+                    {/* Actual section */}
+                    {hasActual ? (
+                      <>
+                        <div style={{height:1,background:"#1e2535",marginBottom:8}}/>
+                        <div style={{fontSize:10,color:"#60a5fa",fontWeight:700,marginBottom:6,letterSpacing:1}}>📊 จริง (จากบันทึก)</div>
+                        <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                          <div style={{display:"flex",justifyContent:"space-between",fontSize:12}}>
+                            <span style={{color:"#94a3b8"}}>💰 รายรับจริง</span>
+                            <span style={{color:"#4ade80",fontFamily:"'Space Mono',monospace"}}>+{fmt(actualInc)}</span>
+                          </div>
+                          <div style={{display:"flex",justifyContent:"space-between",fontSize:12}}>
+                            <span style={{color:"#94a3b8"}}>💸 รายจ่ายจริง</span>
+                            <span style={{color:"#f87171",fontFamily:"'Space Mono',monospace"}}>-{fmt(actualExp)}</span>
+                          </div>
+                          <div style={{height:1,background:"#1e2535",margin:"2px 0"}}/>
+                          <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:700}}>
+                            <span style={{color:"#e2e8f0"}}>คงเหลือจริง</span>
+                            <span style={{color:(actualInc-actualExp)>=0?"#60a5fa":"#f87171",fontFamily:"'Space Mono',monospace"}}>{(actualInc-actualExp)>=0?"+":""}{fmt(actualInc-actualExp)}</span>
+                          </div>
+                          {actual.cumulative!==null&&(
+                            <div style={{display:"flex",justifyContent:"space-between",fontSize:11}}>
+                              <span style={{color:"#475569"}}>สะสม (จริง)</span>
+                              <span style={{color:actual.cumulative>=0?"#60a5fa":"#f87171",fontFamily:"'Space Mono',monospace"}}>{actual.cumulative>=0?"+":""}{fmt(actual.cumulative)}</span>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{textAlign:"center",fontSize:11,color:"#374151",padding:"6px 0"}}>ยังไม่มีรายการบันทึกเดือนนี้</div>
+                    )}
+                  </div>
+                  </div>
+                  </>
+                );
+      })()}
+
       {/* Add Budget Modal */}
       {showAddBudget&&(
         <div className="modal-bg" onClick={e=>e.target===e.currentTarget&&setShowAddBudget(false)}>
@@ -1611,4 +1613,4 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
       </div>
     </div>
   );
-                          }
+                                                       }
