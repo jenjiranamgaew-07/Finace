@@ -923,8 +923,10 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
                 </div>
               </div>
 
-              {/* Month Detail Panel */}
-              {monthDetail && (()=>{
+            </div>
+
+      {/* Month Detail MODAL - rendered as overlay */}
+      {monthDetail && (()=>{
                 const mi = monthDetail.monthIndex; // 0-based month (4=May)
                 const proj = projection[mi-4];
                 const actualM = actualProjection[mi-4];
@@ -938,7 +940,7 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
                 const actualExp = actualM?.expense ?? monthTxns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
                 const hasActual = actualM?.hasData || monthTxns.length > 0;
                 return (
-                  <div style={{marginTop:10,background:"#071525",border:"1px solid #1e3a5f",borderRadius:10,padding:"12px 14px"}}>
+                  <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:999,background:"#0d1117",border:"2px solid #2563eb",borderTopLeftRadius:20,borderTopRightRadius:20,padding:"20px 16px",boxShadow:"0 -8px 32px #000c",maxHeight:"80vh",overflowY:"auto"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                       <span style={{fontSize:13,fontWeight:700,color:"#e2e8f0"}}>📋 {monthDetail.label} 2026</span>
                       <button onClick={()=>setMonthDetail(null)} style={{background:"none",border:"none",color:"#475569",fontSize:15,cursor:"pointer"}}>✕</button>
@@ -1009,8 +1011,8 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
                     )}
                   </div>
                 );
-              })()}
-            </div>
+      })()}
+
 
             {/* Timeline */}
             <div style={S.card}>
@@ -1568,6 +1570,7 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
               }}>💾 เพิ่มงบ</button>
             </div>
             <button onClick={()=>setShowAddBudget(false)} style={{width:"100%",marginTop:8,background:"none",border:"none",color:"#475569",fontSize:13,cursor:"pointer",fontFamily:"inherit",padding:8}}>ยกเลิก</button>
+                  
           </div>
         </div>
       )}
@@ -1602,4 +1605,4 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
       </div>
     </div>
   );
-        }
+    }
