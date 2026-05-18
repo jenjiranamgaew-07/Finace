@@ -1611,4 +1611,4 @@ Financial Score: ${financialScore.score}/100 (${financialScore.label})
       </div>
     </div>
   );
-        }
+                          }
