@@ -345,7 +345,16 @@ export default function App() {
   const thisMonthSpent = thisMonthTxns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
   const thisMonthIncome = thisMonthTxns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
 
-  const dailyBurn = thisMonthSpent / new Date().getDate();
+  // Burn rate เฉพาะค่าใช้จ่ายจริง ไม่รวมหนี้
+  const DEBT_CATEGORIES = [
+    "หนี้บ้านไทย ABN","บัตรเครดิต ABN","Bondora","บัตร Amex","ประกันสุขภาพสะสม",
+    "หนี้ DUO","หนี้ไทย","กู้สหกรณ์","ไฟแนนซ์รถคิก","ไฟแนนซ์รถคอท","หนี้ทรู","Shopee",
+    ...debts.map(d => d.name)
+  ];
+  const dailyBurnSpent = thisMonthTxns
+    .filter(t => t.amount < 0 && !DEBT_CATEGORIES.includes(t.category))
+    .reduce((s,t) => s + Math.abs(t.amount), 0);
+  const dailyBurn = dailyBurnSpent / new Date().getDate();
   const daysLeft = balance / dailyBurn;
   const forecastDate = new Date(); forecastDate.setDate(forecastDate.getDate() + Math.round(daysLeft));
 
